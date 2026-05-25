@@ -1,0 +1,63 @@
+# NGINX example for CiteFlow Manager
+#
+# Use this as a starting point for paid hosting / VPS deployments.
+# Adjust server_name, root, and fastcgi_pass to your environment.
+
+server {
+    listen 80;
+    server_name example.com www.example.com;
+
+    # Project root (contains index.php, client_portal.php, app/, public/, etc.)
+    root /var/www/Citeflow_Manager;
+    index index.php index.html;
+
+    client_max_body_size 10m;
+
+    # Block internal/private folders
+    location ~ ^/(app|database|memories|\.git|\.github|\.vscode)(/|$) {
+        deny all;
+    }
+
+    # Block sensitive files
+    location ~ ^/(README\.md|update_users\.py|composer\.(json|lock)|package(-lock)?\.json|phpunit\.xml)$ {
+        deny all;
+    }
+
+    # Canonical route aliases
+    location = /index.php {
+        return 301 /;
+    }
+
+    location = /public/index.php {
+        return 301 /;
+    }
+
+    location = /public/client_login.php {
+        return 301 /client_portal.php;
+    }
+
+    # Main app routing: try direct resource, then map to /public
+    location / {
+        try_files $uri $uri/ /public$uri /public/index.php?$query_string;
+    }
+
+    # Never execute uploaded scripts
+    location ~ ^/uploads/.*\.(php|phtml|phar|php[0-9]*)$ {
+        deny all;
+    }
+
+    # PHP handler
+    location ~ \.php$ {
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+        fastcgi_read_timeout 120;
+    }
+
+    # Optional static cache headers
+    location ~* \.(?:css|js|png|jpg|jpeg|gif|svg|ico|webp|woff2?)$ {
+        expires 7d;
+        add_header Cache-Control "public";
+        access_log off;
+    }
+}
