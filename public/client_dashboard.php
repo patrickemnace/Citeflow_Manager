@@ -228,13 +228,13 @@ if ($selectedBusinessId > 0) {
 
 $statusBadge = static function (string $status): string {
     return match ($status) {
-        'live' => 'bg-emerald-100 text-emerald-800',
-        'pending_submission' => 'bg-orange-100 text-orange-800',
-        'in_progress' => 'bg-blue-100 text-blue-800',
-        'not_started' => 'bg-slate-100 text-slate-700',
-        'needs_edit' => 'bg-amber-100 text-amber-800',
-        'rejected' => 'bg-rose-100 text-rose-800',
-        default => 'bg-slate-100 text-slate-700',
+        'live' => 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-200',
+        'pending_submission' => 'bg-orange-100 text-orange-800 dark:bg-orange-500/15 dark:text-orange-200',
+        'in_progress' => 'bg-blue-100 text-blue-800 dark:bg-blue-500/15 dark:text-blue-200',
+        'not_started' => 'bg-slate-100 text-slate-700 dark:bg-slate-700/70 dark:text-slate-200',
+        'needs_edit' => 'bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-200',
+        'rejected' => 'bg-rose-100 text-rose-800 dark:bg-rose-500/15 dark:text-rose-200',
+        default => 'bg-slate-100 text-slate-700 dark:bg-slate-700/70 dark:text-slate-200',
     };
 };
 
@@ -279,43 +279,43 @@ render_header('Client Portal');
 </section>
 
 <section class="mb-6 grid gap-3" style="grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));">
-    <article class="rounded-2xl border border-cyan-200 bg-cyan-50 px-4 py-4 shadow-sm">
-        <p class="text-xs font-bold uppercase tracking-wide text-cyan-700">Portfolio Citations</p>
-        <p class="mt-2 text-3xl font-extrabold text-cyan-900"><?php echo e((string)$totalCitations); ?></p>
-        <p class="mt-1 text-xs text-cyan-700">All tracked listing tasks across businesses</p>
+    <article class="rounded-2xl border border-cyan-200 bg-cyan-50 px-4 py-4 shadow-sm dark:border-cyan-500/30 dark:bg-cyan-500/10">
+        <p class="text-xs font-bold uppercase tracking-wide text-cyan-700 dark:text-cyan-200">Portfolio Citations</p>
+        <p class="mt-2 text-3xl font-extrabold text-cyan-900 dark:text-cyan-100"><?php echo e((string)$totalCitations); ?></p>
+        <p class="mt-1 text-xs text-cyan-700 dark:text-cyan-200/80">All tracked listing tasks across businesses</p>
     </article>
-    <article class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 shadow-sm">
-        <p class="text-xs font-bold uppercase tracking-wide text-emerald-700">Portfolio Live</p>
-        <p class="mt-2 text-3xl font-extrabold text-emerald-900"><?php echo e((string)$liveCitations); ?></p>
-        <p class="mt-1 text-xs text-emerald-700">Listings currently live and visible</p>
+    <article class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 shadow-sm dark:border-emerald-500/30 dark:bg-emerald-500/10">
+        <p class="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-200">Portfolio Live</p>
+        <p class="mt-2 text-3xl font-extrabold text-emerald-900 dark:text-emerald-100"><?php echo e((string)$liveCitations); ?></p>
+        <p class="mt-1 text-xs text-emerald-700 dark:text-emerald-200/80">Listings currently live and visible</p>
     </article>
-    <article class="rounded-2xl border border-orange-200 bg-orange-50 px-4 py-4 shadow-sm">
-        <p class="text-xs font-bold uppercase tracking-wide text-orange-700">Pending Submission</p>
-        <p class="mt-2 text-3xl font-extrabold text-orange-900"><?php echo e((string)$pendingSubmission); ?></p>
-        <p class="mt-1 text-xs text-orange-700">Awaiting directory submission</p>
+    <article class="rounded-2xl border border-orange-200 bg-orange-50 px-4 py-4 shadow-sm dark:border-orange-500/30 dark:bg-orange-500/10">
+        <p class="text-xs font-bold uppercase tracking-wide text-orange-700 dark:text-orange-200">Pending Submission</p>
+        <p class="mt-2 text-3xl font-extrabold text-orange-900 dark:text-orange-100"><?php echo e((string)$pendingSubmission); ?></p>
+        <p class="mt-1 text-xs text-orange-700 dark:text-orange-200/80">Awaiting directory submission</p>
     </article>
-    <article class="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-4 shadow-sm">
-        <p class="text-xs font-bold uppercase tracking-wide text-blue-700">In Progress</p>
-        <p class="mt-2 text-3xl font-extrabold text-blue-900"><?php echo e((string)$inProgress); ?></p>
-        <p class="mt-1 text-xs text-blue-700">Actively being worked by the team</p>
+    <article class="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-4 shadow-sm dark:border-blue-500/30 dark:bg-blue-500/10">
+        <p class="text-xs font-bold uppercase tracking-wide text-blue-700 dark:text-blue-200">In Progress</p>
+        <p class="mt-2 text-3xl font-extrabold text-blue-900 dark:text-blue-100"><?php echo e((string)$inProgress); ?></p>
+        <p class="mt-1 text-xs text-blue-700 dark:text-blue-200/80">Actively being worked by the team</p>
     </article>
-    <article class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 shadow-sm">
-        <p class="text-xs font-bold uppercase tracking-wide text-rose-700">NAP Errors (Live)</p>
-        <p class="mt-2 text-3xl font-extrabold text-rose-900"><?php echo e((string)$napErrors); ?></p>
-        <p class="mt-1 text-xs text-rose-700">Live citations with NAP mismatch</p>
+    <article class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 shadow-sm dark:border-rose-500/30 dark:bg-rose-500/10">
+        <p class="text-xs font-bold uppercase tracking-wide text-rose-700 dark:text-rose-200">NAP Errors (Live)</p>
+        <p class="mt-2 text-3xl font-extrabold text-rose-900 dark:text-rose-100"><?php echo e((string)$napErrors); ?></p>
+        <p class="mt-1 text-xs text-rose-700 dark:text-rose-200/80">Live citations with NAP mismatch</p>
     </article>
 </section>
 
 <section class="grid gap-6 lg:grid-cols-12">
     <aside class="lg:col-span-4">
-        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-24">
+        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 lg:sticky lg:top-24">
             <div class="flex items-center justify-between gap-3">
-                <h2 class="text-base font-bold text-slate-900">Business Navigator</h2>
-                <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600"><?php echo e((string)count($businesses)); ?> items</span>
+                <h2 class="text-base font-bold text-slate-900 dark:text-slate-100">Business Navigator</h2>
+                <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-200"><?php echo e((string)count($businesses)); ?> items</span>
             </div>
-            <p class="mt-1 text-xs text-slate-500">Select a business to load focused metrics and recent updates.</p>
+            <p class="mt-1 text-xs text-slate-500 dark:text-slate-300">Select a business to load focused metrics and recent updates.</p>
             <div class="mt-3">
-                <input id="business_search" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200" type="search" placeholder="Search business name...">
+                <input id="business_search" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:ring-sky-500/30" type="search" placeholder="Search business name...">
             </div>
             <div id="business_list" class="mt-3 max-h-[560px] space-y-2 overflow-y-auto pr-1">
                 <?php foreach ($businesses as $business): ?>
@@ -329,33 +329,33 @@ render_header('Client Portal');
                     <a
                         href="<?php echo e(app_config()['base_url']); ?>/client_dashboard.php?business_id=<?php echo e((string)$business['id']); ?>"
                         data-business-name="<?php echo e(strtolower((string)$business['name'])); ?>"
-                        class="business-item block rounded-xl border px-4 py-3 transition hover:-translate-y-0.5 hover:shadow-sm <?php echo $isSelectedBusiness ? 'border-sky-300 bg-sky-50 ring-1 ring-sky-200' : 'border-slate-200 bg-slate-50 hover:border-slate-300'; ?>"
+                        class="business-item block rounded-xl border px-4 py-3 transition hover:-translate-y-0.5 hover:shadow-sm <?php echo $isSelectedBusiness ? 'border-sky-300 bg-sky-50 ring-1 ring-sky-200 dark:border-sky-500/60 dark:bg-sky-500/10 dark:ring-sky-500/30' : 'border-slate-200 bg-slate-50 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800/70 dark:hover:border-slate-500'; ?>"
                     >
                         <div class="flex items-start justify-between gap-3">
                             <div class="flex min-w-0 items-start gap-3">
                                 <?php if (trim((string)($business['logo_path'] ?? '')) !== ''): ?>
-                                    <img class="h-10 w-10 shrink-0 rounded-lg border border-slate-200 object-cover" src="<?php echo e(public_asset_url((string)$business['logo_path'])); ?>" alt="<?php echo e((string)$business['name']); ?> logo">
+                                    <img class="h-10 w-10 shrink-0 rounded-lg border border-slate-200 object-cover dark:border-slate-700" src="<?php echo e(public_asset_url((string)$business['logo_path'])); ?>" alt="<?php echo e((string)$business['name']); ?> logo">
                                 <?php else: ?>
-                                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-200 text-xs font-bold uppercase text-slate-700">
+                                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-200 text-xs font-bold uppercase text-slate-700 dark:bg-slate-700 dark:text-slate-100">
                                         <?php echo e(substr((string)$business['name'], 0, 1)); ?>
                                     </div>
                                 <?php endif; ?>
                                 <div class="min-w-0">
-                                <p class="text-sm font-semibold text-slate-900"><?php echo e((string)$business['name']); ?></p>
-                                <p class="mt-1 text-xs text-slate-500"><?php echo e((string)$business['city']); ?>, <?php echo e((string)$business['state']); ?></p>
+                                <p class="text-sm font-semibold text-slate-900 dark:text-slate-100"><?php echo e((string)$business['name']); ?></p>
+                                <p class="mt-1 text-xs text-slate-500 dark:text-slate-300"><?php echo e((string)$business['city']); ?>, <?php echo e((string)$business['state']); ?></p>
                                 </div>
                             </div>
-                            <span class="inline-flex rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-700"><?php echo e(ucfirst((string)$business['status'])); ?></span>
+                            <span class="inline-flex rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-200"><?php echo e(ucfirst((string)$business['status'])); ?></span>
                         </div>
                         <div class="mt-2 flex flex-wrap gap-2 text-[11px]">
-                            <span class="rounded-full bg-cyan-100 px-2 py-0.5 font-semibold text-cyan-800">Total: <?php echo e((string)$itemTotal); ?></span>
-                            <span class="rounded-full bg-emerald-100 px-2 py-0.5 font-semibold text-emerald-800">Live: <?php echo e((string)$itemLive); ?></span>
-                            <span class="rounded-full bg-slate-200 px-2 py-0.5 font-semibold text-slate-700">Rate: <?php echo e((string)$itemLiveRate); ?>%</span>
+                            <span class="rounded-full bg-cyan-100 px-2 py-0.5 font-semibold text-cyan-800 dark:bg-cyan-500/15 dark:text-cyan-200">Total: <?php echo e((string)$itemTotal); ?></span>
+                            <span class="rounded-full bg-emerald-100 px-2 py-0.5 font-semibold text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-200">Live: <?php echo e((string)$itemLive); ?></span>
+                            <span class="rounded-full bg-slate-200 px-2 py-0.5 font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-200">Rate: <?php echo e((string)$itemLiveRate); ?>%</span>
                         </div>
                     </a>
                 <?php endforeach; ?>
                 <?php if (!$businesses): ?>
-                    <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-500">No businesses linked to this client yet.</div>
+                    <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300">No businesses linked to this client yet.</div>
                 <?php endif; ?>
             </div>
         </article>
@@ -363,64 +363,64 @@ render_header('Client Portal');
 
     <div class="lg:col-span-8 space-y-6">
         <?php if ($selectedBusinessId > 0 && $selectedBusiness !== null): ?>
-            <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <div class="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 pb-4">
+            <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                <div class="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 pb-4 dark:border-slate-700">
                     <div class="flex items-start gap-3">
                         <?php if (trim((string)($selectedBusiness['logo_path'] ?? '')) !== ''): ?>
-                            <img class="h-12 w-12 shrink-0 rounded-xl border border-slate-200 object-cover" src="<?php echo e(public_asset_url((string)$selectedBusiness['logo_path'])); ?>" alt="<?php echo e((string)$selectedBusiness['name']); ?> logo">
+                            <img class="h-12 w-12 shrink-0 rounded-xl border border-slate-200 object-cover dark:border-slate-700" src="<?php echo e(public_asset_url((string)$selectedBusiness['logo_path'])); ?>" alt="<?php echo e((string)$selectedBusiness['name']); ?> logo">
                         <?php else: ?>
-                            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-200 text-sm font-bold uppercase text-slate-700">
+                            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-200 text-sm font-bold uppercase text-slate-700 dark:bg-slate-700 dark:text-slate-100">
                                 <?php echo e(substr((string)$selectedBusiness['name'], 0, 1)); ?>
                             </div>
                         <?php endif; ?>
                         <div>
-                            <h2 class="text-xl font-bold text-slate-900"><?php echo e((string)$selectedBusiness['name']); ?></h2>
-                            <p class="text-sm text-slate-500"><?php echo e((string)$selectedBusiness['city']); ?>, <?php echo e((string)$selectedBusiness['state']); ?> · Status: <?php echo e(ucfirst((string)$selectedBusiness['status'])); ?></p>
-                            <p class="mt-1 text-xs font-medium uppercase tracking-wide text-slate-400">Business Performance View</p>
+                            <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100"><?php echo e((string)$selectedBusiness['name']); ?></h2>
+                            <p class="text-sm text-slate-500 dark:text-slate-300"><?php echo e((string)$selectedBusiness['city']); ?>, <?php echo e((string)$selectedBusiness['state']); ?> · Status: <?php echo e(ucfirst((string)$selectedBusiness['status'])); ?></p>
+                            <p class="mt-1 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">Business Performance View</p>
                         </div>
                     </div>
-                    <a class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100" href="<?php echo e(app_config()['base_url']); ?>/client_dashboard.php">Clear Selection</a>
+                    <a class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800" href="<?php echo e(app_config()['base_url']); ?>/client_dashboard.php">Clear Selection</a>
                 </div>
 
                 <div class="grid gap-3" style="grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));">
-                    <article class="rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3 shadow-sm">
-                        <p class="text-xs font-bold uppercase tracking-wide text-cyan-700">Total Citations</p>
-                        <p class="mt-1 text-2xl font-extrabold text-cyan-900"><?php echo e((string)(int)($selectedTotals['total_citations'] ?? 0)); ?></p>
+                    <article class="rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3 shadow-sm dark:border-cyan-500/30 dark:bg-cyan-500/10">
+                        <p class="text-xs font-bold uppercase tracking-wide text-cyan-700 dark:text-cyan-200">Total Citations</p>
+                        <p class="mt-1 text-2xl font-extrabold text-cyan-900 dark:text-cyan-100"><?php echo e((string)(int)($selectedTotals['total_citations'] ?? 0)); ?></p>
                     </article>
-                    <article class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-sm">
-                        <p class="text-xs font-bold uppercase tracking-wide text-emerald-700">Live Citations</p>
-                        <p class="mt-1 text-2xl font-extrabold text-emerald-900"><?php echo e((string)(int)($selectedTotals['live_citations'] ?? 0)); ?></p>
+                    <article class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-sm dark:border-emerald-500/30 dark:bg-emerald-500/10">
+                        <p class="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-200">Live Citations</p>
+                        <p class="mt-1 text-2xl font-extrabold text-emerald-900 dark:text-emerald-100"><?php echo e((string)(int)($selectedTotals['live_citations'] ?? 0)); ?></p>
                     </article>
-                    <article class="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 shadow-sm">
-                        <p class="text-xs font-bold uppercase tracking-wide text-orange-700">Pending Submission</p>
-                        <p class="mt-1 text-2xl font-extrabold text-orange-900"><?php echo e((string)(int)($selectedTotals['pending_submission'] ?? 0)); ?></p>
+                    <article class="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 shadow-sm dark:border-orange-500/30 dark:bg-orange-500/10">
+                        <p class="text-xs font-bold uppercase tracking-wide text-orange-700 dark:text-orange-200">Pending Submission</p>
+                        <p class="mt-1 text-2xl font-extrabold text-orange-900 dark:text-orange-100"><?php echo e((string)(int)($selectedTotals['pending_submission'] ?? 0)); ?></p>
                     </article>
-                    <article class="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 shadow-sm">
-                        <p class="text-xs font-bold uppercase tracking-wide text-blue-700">In Progress</p>
-                        <p class="mt-1 text-2xl font-extrabold text-blue-900"><?php echo e((string)(int)($selectedTotals['in_progress'] ?? 0)); ?></p>
+                    <article class="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 shadow-sm dark:border-blue-500/30 dark:bg-blue-500/10">
+                        <p class="text-xs font-bold uppercase tracking-wide text-blue-700 dark:text-blue-200">In Progress</p>
+                        <p class="mt-1 text-2xl font-extrabold text-blue-900 dark:text-blue-100"><?php echo e((string)(int)($selectedTotals['in_progress'] ?? 0)); ?></p>
                     </article>
-                    <article class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 shadow-sm">
-                        <p class="text-xs font-bold uppercase tracking-wide text-rose-700">NAP Errors (Live)</p>
-                        <p class="mt-1 text-2xl font-extrabold text-rose-900"><?php echo e((string)(int)($selectedTotals['nap_errors'] ?? 0)); ?></p>
+                    <article class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 shadow-sm dark:border-rose-500/30 dark:bg-rose-500/10">
+                        <p class="text-xs font-bold uppercase tracking-wide text-rose-700 dark:text-rose-200">NAP Errors (Live)</p>
+                        <p class="mt-1 text-2xl font-extrabold text-rose-900 dark:text-rose-100"><?php echo e((string)(int)($selectedTotals['nap_errors'] ?? 0)); ?></p>
                     </article>
                 </div>
 
                 <div class="mt-4 grid gap-3 md:grid-cols-2">
-                    <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/80">
                         <div class="flex items-center justify-between gap-3">
-                            <p class="text-sm font-semibold text-slate-800">Live Rate</p>
-                            <p class="text-sm font-bold text-slate-700"><?php echo e((string)$selectedLiveRate); ?>%</p>
+                            <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">Live Rate</p>
+                            <p class="text-sm font-bold text-slate-700 dark:text-slate-200"><?php echo e((string)$selectedLiveRate); ?>%</p>
                         </div>
-                        <div class="mt-2 h-3 w-full overflow-hidden rounded-full bg-slate-200">
+                        <div class="mt-2 h-3 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
                             <div class="h-full rounded-full bg-emerald-500" style="width: <?php echo e((string)$selectedLiveRate); ?>%;"></div>
                         </div>
                     </div>
-                    <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/80">
                         <div class="flex items-center justify-between gap-3">
-                            <p class="text-sm font-semibold text-slate-800">Needs Attention Rate</p>
-                            <p class="text-sm font-bold <?php echo $selectedNeedsAttentionRate > 0 ? 'text-rose-700' : 'text-emerald-700'; ?>"><?php echo e((string)$selectedNeedsAttentionRate); ?>%</p>
+                            <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">Needs Attention Rate</p>
+                            <p class="text-sm font-bold <?php echo $selectedNeedsAttentionRate > 0 ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'; ?>"><?php echo e((string)$selectedNeedsAttentionRate); ?>%</p>
                         </div>
-                        <div class="mt-2 h-3 w-full overflow-hidden rounded-full bg-slate-200">
+                        <div class="mt-2 h-3 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
                             <div class="h-full rounded-full <?php echo $selectedNeedsAttentionRate > 0 ? 'bg-rose-500' : 'bg-emerald-500'; ?>" style="width: <?php echo e((string)$selectedNeedsAttentionRate); ?>%;"></div>
                         </div>
                     </div>
@@ -428,35 +428,35 @@ render_header('Client Portal');
             </article>
 
             <section class="grid gap-4 md:grid-cols-3">
-                <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Directories Covered</p>
-                    <p class="mt-1 text-3xl font-extrabold text-slate-900"><?php echo e((string)(int)($selectedInsights['directories_covered'] ?? 0)); ?></p>
-                    <p class="mt-1 text-xs text-slate-500">Unique directories with active citation records.</p>
+                <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                    <p class="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Directories Covered</p>
+                    <p class="mt-1 text-3xl font-extrabold text-slate-900 dark:text-slate-100"><?php echo e((string)(int)($selectedInsights['directories_covered'] ?? 0)); ?></p>
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-300">Unique directories with active citation records.</p>
                 </article>
-                <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Updated (30 Days)</p>
-                    <p class="mt-1 text-3xl font-extrabold text-slate-900"><?php echo e((string)(int)($selectedInsights['updated_last_30_days'] ?? 0)); ?></p>
-                    <p class="mt-1 text-xs text-slate-500">Recent work activity within the last month.</p>
+                <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                    <p class="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Updated (30 Days)</p>
+                    <p class="mt-1 text-3xl font-extrabold text-slate-900 dark:text-slate-100"><?php echo e((string)(int)($selectedInsights['updated_last_30_days'] ?? 0)); ?></p>
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-300">Recent work activity within the last month.</p>
                 </article>
-                <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Needs Attention</p>
-                    <p class="mt-1 text-3xl font-extrabold <?php echo (int)($selectedInsights['needs_attention'] ?? 0) > 0 ? 'text-rose-700' : 'text-emerald-700'; ?>"><?php echo e((string)(int)($selectedInsights['needs_attention'] ?? 0)); ?></p>
-                    <p class="mt-1 text-xs text-slate-500">Pending submission, edits, rejects, and live NAP errors.</p>
+                <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                    <p class="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Needs Attention</p>
+                    <p class="mt-1 text-3xl font-extrabold <?php echo (int)($selectedInsights['needs_attention'] ?? 0) > 0 ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'; ?>"><?php echo e((string)(int)($selectedInsights['needs_attention'] ?? 0)); ?></p>
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-300">Pending submission, edits, rejects, and live NAP errors.</p>
                 </article>
             </section>
 
-            <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h3 class="text-base font-bold text-slate-900">Status Distribution</h3>
-                <p class="mt-1 text-xs text-slate-500">Share of citations by workflow status for this business.</p>
-                <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2">
+            <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                <h3 class="text-base font-bold text-slate-900 dark:text-slate-100">Status Distribution</h3>
+                <p class="mt-1 text-xs text-slate-500 dark:text-slate-300">Share of citations by workflow status for this business.</p>
+                <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2 dark:border-slate-700 dark:bg-slate-800/80">
                     <?php foreach ($selectedStatusCounts as $statusKey => $statusCount): ?>
                         <?php $statusRatio = (int)($selectedTotals['total_citations'] ?? 0) > 0 ? round(((int)$statusCount / (int)$selectedTotals['total_citations']) * 100, 1) : 0; ?>
                         <div>
                             <div class="mb-1 flex items-center justify-between text-xs">
-                                <span class="font-semibold text-slate-700"><?php echo e(status_label((string)$statusKey)); ?></span>
-                                <span class="text-slate-500"><?php echo e((string)$statusCount); ?> · <?php echo e((string)$statusRatio); ?>%</span>
+                                <span class="font-semibold text-slate-700 dark:text-slate-200"><?php echo e(status_label((string)$statusKey)); ?></span>
+                                <span class="text-slate-500 dark:text-slate-400"><?php echo e((string)$statusCount); ?> · <?php echo e((string)$statusRatio); ?>%</span>
                             </div>
-                            <div class="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+                            <div class="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
                                 <div class="h-full rounded-full <?php echo e($statusBarClass((string)$statusKey)); ?>" style="width: <?php echo e((string)$statusRatio); ?>%;"></div>
                             </div>
                         </div>
@@ -464,41 +464,41 @@ render_header('Client Portal');
                 </div>
             </article>
 
-            <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h3 class="text-base font-bold text-slate-900">Recent Citation Updates</h3>
-                <p class="mt-1 text-xs text-slate-500">Most recently updated citation records for this business.</p>
-                <div class="cf-table-wrap mt-3 overflow-x-auto rounded-xl border border-slate-200">
-                    <table class="cf-table min-w-[820px] divide-y divide-slate-200">
-                        <thead class="bg-slate-50">
+            <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                <h3 class="text-base font-bold text-slate-900 dark:text-slate-100">Recent Citation Updates</h3>
+                <p class="mt-1 text-xs text-slate-500 dark:text-slate-300">Most recently updated citation records for this business.</p>
+                <div class="cf-table-wrap mt-3 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+                    <table class="cf-table min-w-[820px] divide-y divide-slate-200 dark:divide-slate-700">
+                        <thead class="bg-slate-50 dark:bg-slate-800/90">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-500">Directory</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-500 hidden sm:table-cell">Status</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-500 hidden md:table-cell">NAP</th>
-                                <th class="px-4 py-3 text-center text-xs font-bold uppercase tracking-wide text-slate-500">View</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-500 hidden lg:table-cell">Updated</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-500">Comments</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-300">Directory</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-300 hidden sm:table-cell">Status</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-300 hidden md:table-cell">NAP</th>
+                                <th class="px-4 py-3 text-center text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-300">View</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-300 hidden lg:table-cell">Updated</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-300">Comments</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100 bg-white">
+                        <tbody class="divide-y divide-slate-100 bg-white dark:divide-slate-700 dark:bg-slate-900">
                             <?php foreach ($selectedRecentCitations as $citation): ?>
                                 <?php $directoryLogoPath = trim((string)($citation['directory_logo_path'] ?? '')); ?>
-                                <tr class="odd:bg-white even:bg-slate-50/60">
-                                    <td class="px-4 py-3 text-sm text-slate-700">
+                                <tr class="odd:bg-white even:bg-slate-50/60 dark:odd:bg-slate-900 dark:even:bg-slate-800/70">
+                                    <td class="px-4 py-3 text-sm text-slate-700 dark:text-slate-200">
                                         <div class="flex items-center gap-2.5 min-w-[200px]">
                                             <?php if ($directoryLogoPath !== ''): ?>
-                                                <img class="h-8 w-8 shrink-0 rounded-md border border-slate-200 object-cover" src="<?php echo e(public_asset_url($directoryLogoPath)); ?>" alt="<?php echo e((string)$citation['directory_name']); ?> logo">
+                                                <img class="h-8 w-8 shrink-0 rounded-md border border-slate-200 object-cover dark:border-slate-700" src="<?php echo e(public_asset_url($directoryLogoPath)); ?>" alt="<?php echo e((string)$citation['directory_name']); ?> logo">
                                             <?php else: ?>
-                                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-slate-100 text-[11px] font-bold uppercase text-slate-600">
+                                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-slate-100 text-[11px] font-bold uppercase text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                                                     <?php echo e(substr((string)$citation['directory_name'], 0, 1)); ?>
                                                 </div>
                                             <?php endif; ?>
-                                            <span class="font-medium text-slate-800"><?php echo e((string)$citation['directory_name']); ?></span>
+                                            <span class="font-medium text-slate-800 dark:text-slate-100"><?php echo e((string)$citation['directory_name']); ?></span>
                                         </div>
                                     </td>
                                     <td class="px-4 py-3 text-sm hidden sm:table-cell">
                                         <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold <?php echo e($statusBadge((string)$citation['status'])); ?>"><?php echo e(status_label((string)$citation['status'])); ?></span>
                                     </td>
-                                    <td class="px-4 py-3 text-sm text-slate-700 hidden md:table-cell">
+                                    <td class="px-4 py-3 text-sm text-slate-700 dark:text-slate-300 hidden md:table-cell">
                                         <?php
                                             $citationStatus = (string)($citation['status'] ?? '');
                                             $citationNapStatus = (string)($citation['nap_status'] ?? '');
@@ -514,7 +514,7 @@ render_header('Client Portal');
                                     <td class="px-4 py-3 text-center">
                                         <?php if ($citationStatus === 'live' && trim((string)$citation['submitted_url']) !== ''): ?>
                                             <a
-                                                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100 hover:text-emerald-800"
+                                                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100 hover:text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200 dark:hover:bg-emerald-500/20 dark:hover:text-emerald-100"
                                                 href="<?php echo e((string)$citation['submitted_url']); ?>"
                                                 target="_blank"
                                                 rel="noopener noreferrer"
@@ -527,21 +527,21 @@ render_header('Client Portal');
                                                 </svg>
                                             </a>
                                         <?php else: ?>
-                                            <span class="text-slate-400">—</span>
+                                            <span class="text-slate-400 dark:text-slate-500">—</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td class="px-4 py-3 text-sm text-slate-600 whitespace-nowrap hidden lg:table-cell"><?php echo e((string)$citation['updated_at']); ?></td>
-                                    <td class="px-4 py-3 text-sm text-slate-700">
+                                    <td class="px-4 py-3 text-sm text-slate-600 whitespace-nowrap hidden lg:table-cell dark:text-slate-400"><?php echo e((string)$citation['updated_at']); ?></td>
+                                    <td class="px-4 py-3 text-sm text-slate-700 dark:text-slate-200">
                                         <div class="flex items-center gap-2">
                                             <button
                                                 type="button"
-                                                class="inline-flex items-center gap-1 rounded-lg border border-brand-300 bg-brand-50 px-2.5 py-1.5 text-xs font-semibold text-brand-700 hover:bg-brand-100 transition open-comment-modal"
+                                                class="inline-flex items-center gap-1 rounded-lg border border-brand-300 bg-brand-50 px-2.5 py-1.5 text-xs font-semibold text-brand-700 hover:bg-brand-100 transition open-comment-modal dark:border-brand-500/40 dark:bg-brand-500/10 dark:text-brand-200 dark:hover:bg-brand-500/20"
                                                 data-citation-id="<?php echo e((string)(int)$citation['id']); ?>"
                                                 data-directory-name="<?php echo e((string)$citation['directory_name']); ?>"
                                                 title="View and add comments"
                                             >
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M3.196 12.87c-.263.26-.36.64-.27 1.01.112.53.567.9 1.07.9.05 0 .1-.002.15-.01l.113-.013A4.972 4.972 0 0 0 10 15c4.418 0 8-1.79 8-4s-3.582-4-8-4-8 1.79-8 4c0 .364.074.718.208 1.05a2.001 2.001 0 0 1 .596 1.82Z" /></svg>
-                                                <span class="inline-flex rounded-full bg-brand-200 px-1.5 py-0.5 text-[10px] font-bold text-brand-900"><?php echo e((string)(int)($citation['comments_count'] ?? 0)); ?></span>
+                                                <span class="inline-flex rounded-full bg-brand-200 px-1.5 py-0.5 text-[10px] font-bold text-brand-900 dark:bg-brand-400/20 dark:text-brand-100"><?php echo e((string)(int)($citation['comments_count'] ?? 0)); ?></span>
                                             </button>
                                         </div>
                                     </td>
@@ -549,7 +549,7 @@ render_header('Client Portal');
                             <?php endforeach; ?>
                             <?php if (!$selectedRecentCitations): ?>
                                 <tr>
-                                    <td class="px-4 py-4 text-sm text-slate-500" colspan="6">No citation updates yet for this business.</td>
+                                    <td class="px-4 py-4 text-sm text-slate-500 dark:text-slate-300" colspan="6">No citation updates yet for this business.</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
@@ -557,10 +557,10 @@ render_header('Client Portal');
                 </div>
             </article>
         <?php else: ?>
-            <article class="rounded-2xl border border-slate-200 bg-white p-7 text-center shadow-sm">
-                <p class="text-sm font-bold uppercase tracking-[0.16em] text-slate-400">Business Detail Workspace</p>
-                <h2 class="mt-2 text-xl font-extrabold text-slate-900">Select a business to view details</h2>
-                <p class="mt-2 text-sm text-slate-500">Use the Business Navigator on the left to review live rates, citation health insights, status distribution, and recent updates per business.</p>
+            <article class="rounded-2xl border border-slate-200 bg-white p-7 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                <p class="text-sm font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">Business Detail Workspace</p>
+                <h2 class="mt-2 text-xl font-extrabold text-slate-900 dark:text-slate-100">Select a business to view details</h2>
+                <p class="mt-2 text-sm text-slate-500 dark:text-slate-300">Use the Business Navigator on the left to review live rates, citation health insights, status distribution, and recent updates per business.</p>
             </article>
         <?php endif; ?>
     </div>
