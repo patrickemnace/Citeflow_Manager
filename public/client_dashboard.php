@@ -672,32 +672,32 @@ render_header('Client Portal');
     modal.id = 'clientCommentModal';
     modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 opacity-0 pointer-events-none transition-opacity duration-200';
     modal.innerHTML = `
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl mx-4 max-h-[85vh] overflow-y-auto flex flex-col">
-            <div class="sticky top-0 bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between gap-3">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl mx-4 max-h-[85vh] overflow-y-auto flex flex-col dark:bg-slate-900 dark:ring-1 dark:ring-slate-700">
+            <div class="sticky top-0 bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between gap-3 dark:bg-slate-900 dark:border-slate-700">
                 <div>
-                    <h2 class="text-lg font-bold text-slate-900"><span id="modalDirName"></span> - Comments & Updates</h2>
-                    <p class="mt-1 text-xs text-slate-500">Manage comments for this citation</p>
+                    <h2 class="text-lg font-bold text-slate-900 dark:text-slate-100"><span id="modalDirName"></span> - Comments & Updates</h2>
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-300">Manage comments for this citation</p>
                 </div>
-                <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition" id="closeCommentModal" aria-label="Close modal">
+                <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white" id="closeCommentModal" aria-label="Close modal">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                 </button>
             </div>
             <div class="flex-1 overflow-y-auto p-5">
                 <div id="existingComments" class="mb-6 space-y-3"></div>
-                <form id="addCommentForm" method="post" action="${baseUrl}/client_dashboard.php" class="border-t border-slate-200 pt-5">
+                <form id="addCommentForm" method="post" action="${baseUrl}/client_dashboard.php" class="border-t border-slate-200 pt-5 dark:border-slate-700">
                     <input type="hidden" name="action" value="add_citation_comment">
                     <input type="hidden" name="listing_task_id" id="modalListingTaskId" value="">
                     <input type="hidden" name="business_id" value="${selectedBusinessId}">
                     <div class="mb-3">
-                        <label class="text-sm font-semibold text-slate-700">Add Your Comment</label>
+                        <label class="text-sm font-semibold text-slate-700 dark:text-slate-200">Add Your Comment</label>
                         <textarea
                             name="comment_text"
                             maxlength="2000"
                             rows="3"
-                            class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                            class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-400"
                             placeholder="Share updates or questions about this citation..."
                         ></textarea>
-                        <p class="mt-1 text-xs text-slate-500">Maximum 2000 characters</p>
+                        <p class="mt-1 text-xs text-slate-500 dark:text-slate-300">Maximum 2000 characters</p>
                     </div>
                     <button type="submit" class="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 transition">Post Comment</button>
                 </form>
@@ -719,24 +719,27 @@ render_header('Client Portal');
         const comments = allComments[citationId] || [];
 
         if (comments.length === 0) {
-            existingCommentsDiv.innerHTML = '<p class="text-sm text-slate-500 py-2">No comments yet. Be the first to add one!</p>';
+            existingCommentsDiv.innerHTML = '<p class="text-sm text-slate-500 dark:text-slate-300 py-2">No comments yet. Be the first to add one!</p>';
         } else {
             existingCommentsDiv.innerHTML = comments.map(c => {
                 const isUpdated = (c.resolution_status || 'pending').toLowerCase() === 'updated';
-                const bgClass = isUpdated ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50';
-                const textClass = isUpdated ? 'text-emerald-900' : 'text-amber-900';
+                const bgClass = isUpdated
+                    ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-900/25'
+                    : 'border-amber-200 bg-amber-50 dark:border-amber-700 dark:bg-amber-900/25';
+                const textClass = isUpdated ? 'text-emerald-900 dark:text-emerald-100' : 'text-amber-900 dark:text-amber-100';
+                const headingClass = isUpdated ? 'text-emerald-900 dark:text-emerald-200' : 'text-amber-900 dark:text-amber-200';
                 const statusHtml = isUpdated
-                    ? `<span class="inline-flex items-center gap-0.5 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                    ? `<span class="inline-flex items-center gap-0.5 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.704 5.29a1 1 0 0 1 .006 1.414l-7.75 7.812a1 1 0 0 1-1.42.006L3.29 10.329a1 1 0 1 1 1.42-1.408l3.54 3.57 7.04-7.095a1 1 0 0 1 1.414-.006Z" clip-rule="evenodd" /></svg>
                         Updated
                     </span>`
-                    : `<span class="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">Pending</span>`;
+                    : `<span class="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-900/40 dark:text-amber-200">Pending</span>`;
                 const escapedText = c.comment_text
                     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
                 return `
                     <div class="rounded-lg border ${bgClass} p-3">
                         <div class="flex items-start justify-between gap-2 mb-2">
-                            <p class="text-xs font-semibold ${textClass}">${c.created_at}</p>
+                            <p class="text-xs font-semibold ${headingClass}">${c.created_at}</p>
                             ${statusHtml}
                         </div>
                         <p class="text-sm ${textClass} whitespace-pre-wrap break-words">${escapedText}</p>
