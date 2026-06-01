@@ -344,7 +344,7 @@ render_header('User Management');
                                 <h3 class="text-base font-bold text-slate-900">Edit User: <?php echo e((string)$u['full_name']); ?></h3>
                                 <button type="button" class="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800" onclick="closeUserEditModal('edit_user_modal_<?php echo e((string)$u['id']); ?>')">Close</button>
                             </div>
-                            <form method="post" enctype="multipart/form-data" class="grid gap-4">
+                            <form method="post" enctype="multipart/form-data" class="space-y-5">
                                 <input type="hidden" name="action" value="update_user">
                                 <input type="hidden" name="user_id" value="<?php echo e((string)$u['id']); ?>">
                                 <input class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100" type="text" name="full_name" value="<?php echo e($u['full_name']); ?>" required>
@@ -371,14 +371,20 @@ render_header('User Management');
                                     <option value="Project Manager" <?php echo $u['designation'] === 'Project Manager' ? 'selected' : ''; ?>>Project Manager</option>
                                 </select>
                                 <input class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100" type="file" name="image" accept="image/jpeg,image/png,image/webp,image/gif" placeholder="Upload image">
-                                <p class="-mt-2 text-xs text-slate-500 dark:text-slate-400">Any image size is accepted and automatically optimized to a maximum of 200KB.</p>
                                 <?php if (trim((string)($u['image_path'] ?? '')) !== ''): ?>
-                                    <label class="-mt-1 inline-flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+                                    <div class="mt-1 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+                                        <img class="h-10 w-10 rounded-full border border-slate-200 object-cover" src="<?php echo e((string)$u['image_path']); ?>" alt="Current user image">
+                                        <span>Current image</span>
+                                    </div>
+                                <?php endif; ?>
+                                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Any image size is accepted and automatically optimized to a maximum of 200KB.</p>
+                                <?php if (trim((string)($u['image_path'] ?? '')) !== ''): ?>
+                                    <label class="mt-1 inline-flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
                                         <input type="checkbox" name="remove_image" value="1" class="rounded border-slate-300">
                                         Remove current user image
                                     </label>
                                 <?php endif; ?>
-                                <div class="rounded-lg border border-slate-300 bg-slate-50 px-3 py-3.5 text-xs text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                <div class="mt-2 rounded-lg border border-slate-300 bg-slate-50 px-3 py-3.5 text-xs text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300">
                                     <p class="mb-2 font-semibold text-slate-700">Employee Feature Access</p>
                                     <div class="grid gap-1.5 sm:grid-cols-2">
                                         <?php foreach ($featureOptions as $featureKey => $featureLabel): ?>
@@ -390,7 +396,7 @@ render_header('User Management');
                                     </div>
                                 </div>
                                 <input class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100" type="password" name="new_password" placeholder="New password (optional)">
-                                <div class="flex justify-end gap-2">
+                                <div class="flex justify-end gap-2 pt-1">
                                     <button type="button" class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800" onclick="closeUserEditModal('edit_user_modal_<?php echo e((string)$u['id']); ?>')">Cancel</button>
                                     <button class="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-950" type="submit">Update User</button>
                                 </div>
