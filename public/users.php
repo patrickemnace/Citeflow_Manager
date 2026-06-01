@@ -98,6 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'update_user') {
     $designation = post('designation', '');
     $isActive = (int)post('is_active', '1');
     $newPassword = post('new_password');
+    $removeImageRequested = post('remove_image') === '1';
     $permissions = isset($_POST['permissions']) && is_array($_POST['permissions'])
         ? $_POST['permissions']
         : [];
@@ -133,12 +134,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'update_user') {
         redirect('/users.php');
     }
 
-    $previousImagePath = '';
-    if ($uploadedImagePath === null) {
-        $previousStmt = db()->prepare('SELECT image_path FROM users WHERE id = ?');
-        $previousStmt->execute([$userId]);
-        $previousRow = $previousStmt->fetch();
-        $previousImagePath = (string)($previousRow['image_path'] ?? '');
+    $previousStmt = db()->prepare('SELECT image_path FROM users WHERE id = ?');
+    $previousStmt->execute([$userId]);
+    $previousRow = $previousStmt->fetch();
+    $previousImagePath = trim((string)($previousRow['image_path'] ?? ''));
+
+    $imagePath = $previousImagePath;
+    if ($uploadedImagePath !== null) {
+        $imagePath = $uploadedImagePath;
+        if ($previousImagePath !== '' && $previousImagePath !== $uploadedImagePath) {
+            delete_uploaded_asset($previousImagePath);
+        }
+    } elseif ($removeImageRequested && $previousImagePath !== '') {
+        $imagePath = '';
+        delete_uploaded_asset($previousImagePath);
     }
 
     try {
@@ -149,17 +158,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'update_user') {
             }
 
             $sql = 'UPDATE users SET full_name = ?, email = ?, role = ?, designation = ?, image_path = ?, permissions = ?, is_active = ?, password_hash = ? WHERE id = ?';
-            $imagePath = $uploadedImagePath ?? $previousImagePath;
-            if ($uploadedImagePath !== null && $previousImagePath !== '') {
-                delete_uploaded_asset($previousImagePath);
-            }
             db()->prepare($sql)->execute([$fullName, $email, $role, $designation, $imagePath, json_encode($normalizedPermissions), $isActive, password_hash($newPassword, PASSWORD_DEFAULT), $userId]);
         } else {
             $sql = 'UPDATE users SET full_name = ?, email = ?, role = ?, designation = ?, image_path = ?, permissions = ?, is_active = ? WHERE id = ?';
-            $imagePath = $uploadedImagePath ?? $previousImagePath;
-            if ($uploadedImagePath !== null && $previousImagePath !== '') {
-                delete_uploaded_asset($previousImagePath);
-            }
             db()->prepare($sql)->execute([$fullName, $email, $role, $designation, $imagePath, json_encode($normalizedPermissions), $isActive, $userId]);
         }
 
@@ -269,7 +270,7 @@ render_header('User Management');
                 <option value="Project Manager">Project Manager</option>
             </select>
             <input class="rounded-lg border border-slate-300 px-3 py-2 text-sm md:col-span-2 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100" type="file" name="image" accept="image/jpeg,image/png,image/webp,image/gif" placeholder="Upload image">
-            <p class="text-xs text-slate-500 dark:text-slate-400 md:col-span-2">Max image size: 200KB.</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 md:col-span-2">Any image size is accepted and automatically optimized to a maximum of 200KB.</p>
             <div class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-600 md:col-span-6 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300">
                 <p class="mb-2 font-semibold text-slate-700">Employee Feature Access</p>
                 <div class="flex flex-wrap gap-3">
@@ -370,7 +371,13 @@ render_header('User Management');
                                     <option value="Project Manager" <?php echo $u['designation'] === 'Project Manager' ? 'selected' : ''; ?>>Project Manager</option>
                                 </select>
                                 <input class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100" type="file" name="image" accept="image/jpeg,image/png,image/webp,image/gif" placeholder="Upload image">
-                                <p class="-mt-2 text-xs text-slate-500 dark:text-slate-400">Max image size: 200KB.</p>
+                                <p class="-mt-2 text-xs text-slate-500 dark:text-slate-400">Any image size is accepted and automatically optimized to a maximum of 200KB.</p>
+                                <?php if (trim((string)($u['image_path'] ?? '')) !== ''): ?>
+                                    <label class="-mt-1 inline-flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+                                        <input type="checkbox" name="remove_image" value="1" class="rounded border-slate-300">
+                                        Remove current user image
+                                    </label>
+                                <?php endif; ?>
                                 <div class="rounded-lg border border-slate-300 bg-slate-50 px-3 py-3.5 text-xs text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300">
                                     <p class="mb-2 font-semibold text-slate-700">Employee Feature Access</p>
                                     <div class="grid gap-1.5 sm:grid-cols-2">
