@@ -131,6 +131,257 @@ function schedule_uploaded_images_cleanup(): void
     });
 }
 
+function normalize_upload_subdirectory(string $subDirectory): ?string
+{
+    if ($subDirectory === '') {
+        return '';
+    }
+
+    $safeSubDir = trim((string)preg_replace('/[^a-z0-9_\/-]+/i', '_', $subDirectory), '/\\');
+    if ($safeSubDir === '') {
+        return null;
+    }
+
+    return str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $safeSubDir);
+}
+
+function ensure_upload_directory(string $directory): bool
+{
+    if ($directory === '') {
+        return false;
+    }
+
+    if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
+        return false;
+    }
+
+    return is_writable($directory);
+}
+
+function resolve_upload_directory(string $subDirectory = ''): ?array
+{
+    $normalizedSubDir = normalize_upload_subdirectory($subDirectory);
+    if ($normalizedSubDir === null) {
+        return null;
+    }
+
+    $baseCandidates = [];
+    $configured = rtrim((string)(app_config()['upload_dir'] ?? ''), DIRECTORY_SEPARATOR);
+    if ($configured !== '') {
+        $baseCandidates[] = $configured;
+    }
+
+    $defaultUploadRoot = rtrim(__DIR__ . '/../public/uploads', DIRECTORY_SEPARATOR);
+    if (!in_array($defaultUploadRoot, $baseCandidates, true)) {
+        $baseCandidates[] = $defaultUploadRoot;
+    }
+
+    foreach ($baseCandidates as $baseDir) {
+        $targetDir = $baseDir;
+        if ($normalizedSubDir !== '') {
+            $targetDir .= DIRECTORY_SEPARATOR . $normalizedSubDir;
+        }
+
+        if (!ensure_upload_directory($targetDir)) {
+            continue;
+        }
+
+        return [
+            'directory' => $targetDir,
+            'sub_directory' => $normalizedSubDir,
+        ];
+    }
+
+    return null;
+}
+
+function encode_gd_image_to_bytes(
+    GdImage $image,
+    string $format,
+    int $quality = 82,
+    int $compression = 6,
+    bool $preserveAlpha = false
+): ?string {
+    ob_start();
+
+    $ok = false;
+    if ($format === 'jpeg') {
+        $ok = imagejpeg($image, null, max(15, min(95, $quality)));
+    } elseif ($format === 'webp' && function_exists('imagewebp')) {
+        $ok = imagewebp($image, null, max(15, min(95, $quality)));
+    } elseif ($format === 'png') {
+        if ($preserveAlpha) {
+            imagealphablending($image, false);
+            imagesavealpha($image, true);
+        }
+        $ok = imagepng($image, null, max(0, min(9, $compression)));
+    } elseif ($format === 'gif') {
+        $ok = imagegif($image);
+    }
+
+    $bytes = ob_get_clean();
+    if (!$ok || !is_string($bytes) || $bytes === '') {
+        return null;
+    }
+
+    return $bytes;
+}
+
+function flatten_image_for_jpeg(GdImage $source): GdImage
+{
+    $width = imagesx($source);
+    $height = imagesy($source);
+
+    $canvas = imagecreatetruecolor($width, $height);
+    $white = imagecolorallocate($canvas, 255, 255, 255);
+    imagefill($canvas, 0, 0, $white);
+    imagecopy($canvas, $source, 0, 0, 0, 0, $width, $height);
+
+    return $canvas;
+}
+
+function optimize_image_binary(string $bytes, int $maxUploadSize, ?string &$error = null): ?array
+{
+    $error = null;
+
+    if ($bytes === '') {
+        $error = 'Invalid uploaded file.';
+        return null;
+    }
+
+    $finfo = new finfo(FILEINFO_MIME_TYPE);
+    $detectedMime = (string)$finfo->buffer($bytes);
+    $allowed = [
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/webp' => 'webp',
+        'image/gif' => 'gif',
+    ];
+
+    if (!isset($allowed[$detectedMime])) {
+        $error = 'Only JPG, PNG, WEBP, and GIF images are allowed.';
+        return null;
+    }
+
+    if (strlen($bytes) <= $maxUploadSize) {
+        return [
+            'bytes' => $bytes,
+            'extension' => $allowed[$detectedMime],
+            'mime' => $detectedMime,
+        ];
+    }
+
+    if (!function_exists('imagecreatefromstring')) {
+        $error = 'Image is too large and cannot be optimized on this server.';
+        return null;
+    }
+
+    $image = @imagecreatefromstring($bytes);
+    if (!$image instanceof GdImage) {
+        $error = 'Invalid uploaded file.';
+        return null;
+    }
+
+    $candidates = [];
+
+    if (function_exists('imagewebp')) {
+        foreach ([86, 78, 70, 62, 54, 46, 38, 30] as $quality) {
+            $encoded = encode_gd_image_to_bytes($image, 'webp', $quality);
+            if ($encoded !== null) {
+                $candidates[] = ['bytes' => $encoded, 'extension' => 'webp', 'mime' => 'image/webp'];
+            }
+        }
+    }
+
+    $jpegImage = flatten_image_for_jpeg($image);
+    foreach ([88, 80, 72, 64, 56, 48, 40, 32, 26] as $quality) {
+        $encoded = encode_gd_image_to_bytes($jpegImage, 'jpeg', $quality);
+        if ($encoded !== null) {
+            $candidates[] = ['bytes' => $encoded, 'extension' => 'jpg', 'mime' => 'image/jpeg'];
+        }
+    }
+    imagedestroy($jpegImage);
+
+    if ($detectedMime === 'image/png') {
+        foreach ([9, 8, 7, 6] as $compression) {
+            $encoded = encode_gd_image_to_bytes($image, 'png', 82, $compression, true);
+            if ($encoded !== null) {
+                $candidates[] = ['bytes' => $encoded, 'extension' => 'png', 'mime' => 'image/png'];
+            }
+        }
+    }
+
+    if ($detectedMime === 'image/gif') {
+        $encoded = encode_gd_image_to_bytes($image, 'gif');
+        if ($encoded !== null) {
+            $candidates[] = ['bytes' => $encoded, 'extension' => 'gif', 'mime' => 'image/gif'];
+        }
+    }
+
+    imagedestroy($image);
+
+    usort($candidates, static function (array $a, array $b): int {
+        return strlen((string)$a['bytes']) <=> strlen((string)$b['bytes']);
+    });
+
+    foreach ($candidates as $candidate) {
+        if (strlen((string)$candidate['bytes']) <= $maxUploadSize) {
+            return $candidate;
+        }
+    }
+
+    $error = 'Image is too large. It could not be optimized to 200KB.';
+    return null;
+}
+
+function save_image_binary_to_uploads(
+    string $bytes,
+    string $prefix,
+    string $originalName,
+    ?string &$error = null,
+    string $subDirectory = ''
+): ?string {
+    $error = null;
+
+    $maxUploadSize = (int)app_config()['max_upload_size'];
+    $optimized = optimize_image_binary($bytes, $maxUploadSize, $error);
+    if ($optimized === null) {
+        return null;
+    }
+
+    $resolved = resolve_upload_directory($subDirectory);
+    if ($resolved === null) {
+        $error = 'Unable to create upload directory.';
+        return null;
+    }
+
+    $uploadDir = (string)$resolved['directory'];
+    $normalizedSubDir = (string)$resolved['sub_directory'];
+
+    $originalBase = strtolower(pathinfo(trim($originalName), PATHINFO_FILENAME));
+    $safeBase = trim((string)preg_replace('/[^a-z0-9._-]+/', '_', $originalBase), '._-');
+    if ($safeBase === '') {
+        $safeBase = strtolower($prefix) . '_image';
+    }
+
+    $hash = substr(sha1((string)$optimized['bytes']), 0, 12);
+    $filename = $safeBase . '_' . $hash . '.' . (string)$optimized['extension'];
+    $destination = rtrim($uploadDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $filename;
+
+    if (@file_put_contents($destination, (string)$optimized['bytes'], LOCK_EX) === false) {
+        $error = 'Unable to save uploaded image.';
+        return null;
+    }
+
+    @chmod($destination, 0664);
+
+    if ($normalizedSubDir !== '') {
+        return 'uploads/' . str_replace('\\', '/', $normalizedSubDir) . '/' . $filename;
+    }
+
+    return 'uploads/' . $filename;
+}
+
 function save_uploaded_image_in_uploads(string $fieldName, string $prefix, ?string &$error = null, string $subDirectory = ''): ?string
 {
     $error = null;
@@ -156,70 +407,19 @@ function save_uploaded_image_in_uploads(string $fieldName, string $prefix, ?stri
         return null;
     }
 
-    $size = (int)($file['size'] ?? 0);
-    $maxUploadSize = (int)app_config()['max_upload_size'];
-    if ($size <= 0 || $size > $maxUploadSize) {
-        $maxKb = (int)ceil($maxUploadSize / 1024);
-        $error = 'Image size is too large. Maximum allowed size is ' . $maxKb . 'KB.';
+    $bytes = @file_get_contents($tmpName);
+    if (!is_string($bytes) || $bytes === '') {
+        $error = 'Invalid uploaded file.';
         return null;
     }
 
-    $finfo = new finfo(FILEINFO_MIME_TYPE);
-    $mime = (string)$finfo->file($tmpName);
-    $allowed = [
-        'image/jpeg' => 'jpg',
-        'image/png' => 'png',
-        'image/webp' => 'webp',
-        'image/gif' => 'gif',
-    ];
-
-    if (!isset($allowed[$mime])) {
-        $error = 'Only JPG, PNG, WEBP, and GIF images are allowed.';
-        return null;
-    }
-
-    $uploadDir = rtrim((string)app_config()['upload_dir'], DIRECTORY_SEPARATOR);
-    if ($subDirectory !== '') {
-        $safeSubDir = trim((string)preg_replace('/[^a-z0-9_\/-]+/i', '_', $subDirectory), '/\\');
-        if ($safeSubDir === '') {
-            $error = 'Invalid upload directory.';
-            return null;
-        }
-        $uploadDir .= DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $safeSubDir);
-    }
-
-    if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
-        $error = 'Unable to create upload directory.';
-        return null;
-    }
-
-    $originalName = trim((string)($file['name'] ?? ''));
-    $originalBase = strtolower(pathinfo($originalName, PATHINFO_FILENAME));
-    $safeBase = preg_replace('/[^a-z0-9._-]+/', '_', $originalBase);
-    $safeBase = trim((string)$safeBase, '._-');
-    if ($safeBase === '') {
-        $safeBase = strtolower($prefix) . '_image';
-    }
-
-    $filename = $safeBase . '.' . $allowed[$mime];
-    $destination = rtrim($uploadDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $filename;
-    if (is_file($destination)) {
-        if ($subDirectory !== '') {
-            return 'uploads/' . trim(str_replace('\\', '/', $subDirectory), '/') . '/' . $filename;
-        }
-        return 'uploads/' . $filename;
-    }
-
-    if (!move_uploaded_file($tmpName, $destination)) {
-        $error = 'Unable to save uploaded image.';
-        return null;
-    }
-
-    if ($subDirectory !== '') {
-        return 'uploads/' . trim(str_replace('\\', '/', $subDirectory), '/') . '/' . $filename;
-    }
-
-    return 'uploads/' . $filename;
+    return save_image_binary_to_uploads(
+        $bytes,
+        $prefix,
+        trim((string)($file['name'] ?? '')),
+        $error,
+        $subDirectory
+    );
 }
 
 function save_uploaded_image(string $fieldName, string $prefix, ?string &$error = null): ?string
