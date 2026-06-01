@@ -87,33 +87,13 @@ function fetch_business_logo_from_website(string $website): ?string
         return null;
     }
 
-    $maxUploadSize = (int)app_config()['max_upload_size'];
-    if (strlen($body) > $maxUploadSize) {
-        return null;
-    }
-
-    $finfo = new finfo(FILEINFO_MIME_TYPE);
-    if ((string)$finfo->buffer($body) !== 'image/png') {
-        return null;
-    }
-
     $safeHost = trim((string)preg_replace('/[^a-z0-9]+/i', '_', $host), '_');
     if ($safeHost === '') {
         $safeHost = 'business';
     }
 
-    $uploadDir = rtrim((string)app_config()['upload_dir'], DIRECTORY_SEPARATOR);
-    if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
-        return null;
-    }
-
-    $filename = 'business_logo_auto_' . $safeHost . '.png';
-    $destination = $uploadDir . DIRECTORY_SEPARATOR . $filename;
-    if (@file_put_contents($destination, $body) === false) {
-        return null;
-    }
-
-    return 'uploads/' . $filename;
+    $saveError = null;
+    return save_image_binary_to_uploads($body, 'business_logo_auto', 'business_logo_auto_' . $safeHost, $saveError);
 }
 
 function fetch_remote_html_document(string $url): ?string
@@ -889,7 +869,7 @@ render_header($id > 0 ? 'Edit Business' : 'Add Business');
         <div>
             <label class="mb-1 block text-sm font-semibold text-slate-700">Business Logo</label>
             <input id="business_logo_upload" class="w-full rounded-lg border border-slate-300 px-3 py-2.5" type="file" name="logo" accept="image/*">
-            <p class="mt-1 text-xs text-slate-500">Max image size: 200KB. If no file is uploaded, CiteFlow will try to fetch a small PNG logo from the business website and save it locally.</p>
+            <p class="mt-1 text-xs text-slate-500">Any image size is accepted. CiteFlow auto-optimizes logos to a maximum of 200KB. If no file is uploaded, it will also try to fetch and optimize the website logo automatically.</p>
             <?php if (trim((string)$data['logo_path']) !== ''): ?>
                 <img class="mt-2 h-14 w-14 rounded-lg border border-slate-200 object-cover" src="<?php echo e(public_asset_url((string)$data['logo_path'])); ?>" alt="Business logo">
                 <label class="mt-2 inline-flex items-center gap-2 text-sm text-slate-600">
