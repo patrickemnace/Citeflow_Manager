@@ -133,8 +133,10 @@ function store_submission_screenshot(string $fieldName, ?string &$error = null):
         if ($error !== null) {
             if ($error === 'Only JPG, PNG, WEBP, and GIF images are allowed.') {
                 $error = 'Only JPG, PNG, WEBP, and GIF proof screenshots are allowed.';
-            } elseif ($error === 'Image size is too large.') {
+            } elseif ($error === 'Image size is too large.' || $error === 'Image is too large. It could not be optimized to 200KB.') {
                 $error = 'Proof image size is too large.';
+            } elseif ($error === 'Image is too large and cannot be optimized on this server.') {
+                $error = 'Proof image optimization is unavailable on this server.';
             } elseif ($error === 'Upload failed. Please try again.') {
                 $error = 'Proof upload failed. Please try again.';
             } elseif ($error === 'Invalid uploaded file.') {
@@ -1427,7 +1429,7 @@ render_header('Location Manager');
                 <div id="edit_submission_proof_row">
                     <label class="mb-1 block text-xs font-semibold text-slate-600">Submission Proof (Screenshot)</label>
                     <input class="w-full rounded-lg border border-slate-300 px-2 py-2 text-sm" id="edit_submission_proof" type="file" name="edit_submission_proof" accept="image/*">
-                    <p class="mt-1 text-xs text-slate-500">Max image size: 200KB.</p>
+                    <p class="mt-1 text-xs text-slate-500">Any image size is accepted and automatically optimized to a maximum of 200KB.</p>
                     <p class="mt-1 text-xs text-slate-500" id="edit_submission_proof_hint">Required when status is Pending Submission and no existing proof is on record.</p>
                 </div>
 
