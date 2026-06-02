@@ -249,7 +249,12 @@ render_header('User Management');
             <input type="hidden" name="action" value="create_user">
             <input class="rounded-lg border border-slate-300 px-3 py-2 text-sm md:col-span-2 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100" type="text" name="full_name" placeholder="Full name" required>
             <input class="rounded-lg border border-slate-300 px-3 py-2 text-sm md:col-span-2 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100" type="email" name="email" placeholder="Email" required>
-            <input class="rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100" type="password" name="password" placeholder="Password" minlength="8" required>
+            <div class="relative min-w-[12rem]">
+                <input id="create_user_password" class="w-full rounded-lg border border-slate-300 px-3 py-2 pr-11 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100" type="password" name="password" placeholder="Password" minlength="8" required>
+                <button type="button" class="absolute inset-y-0 right-2 my-1 inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-2 text-slate-700 hover:bg-slate-100 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600" data-password-generate data-target="create_user_password" aria-label="Generate random password" title="Generate random password">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10.5 2a.75.75 0 0 1 .75.75V4h2a2.75 2.75 0 0 1 2.75 2.75v1.69a.75.75 0 0 1-1.5 0V6.75c0-.69-.56-1.25-1.25-1.25h-2V7.5a.75.75 0 0 1-1.28.53L7.44 5.5a.75.75 0 0 1 0-1.06l2.53-2.53A.75.75 0 0 1 10.5 2Zm-1 16a.75.75 0 0 1-.53-.22l-2.53-2.53a.75.75 0 0 1 0-1.06l2.53-2.53a.75.75 0 0 1 1.28.53v2h2c.69 0 1.25-.56 1.25-1.25v-1.69a.75.75 0 0 1 1.5 0v1.69A2.75 2.75 0 0 1 13.25 15h-2v1.25A.75.75 0 0 1 9.5 18Zm-5.75-8A2.75 2.75 0 0 1 6.5 7.25h4a2.75 2.75 0 0 1 0 5.5h-4A2.75 2.75 0 0 1 3.75 10Zm1.5 0c0 .69.56 1.25 1.25 1.25h4a1.25 1.25 0 1 0 0-2.5h-4c-.69 0-1.25.56-1.25 1.25Z"/></svg>
+                </button>
+            </div>
             <select class="rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100" name="role" onchange="toggleDesignation(this)">
                 <option value="employee">Employee</option>
                 <option value="admin">Admin</option>
@@ -395,7 +400,10 @@ render_header('User Management');
                                         <?php endforeach; ?>
                                     </div>
                                 </div>
-                                <input class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100" type="password" name="new_password" placeholder="New password (optional)">
+                                <div class="relative">
+                                    <input id="edit_user_password_<?php echo e((string)$u['id']); ?>" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 pr-20 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100" type="password" name="new_password" placeholder="New password (optional)">
+                                    <button type="button" class="absolute inset-y-0 right-2 my-1 rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600" data-password-toggle data-target="edit_user_password_<?php echo e((string)$u['id']); ?>">View</button>
+                                </div>
                                 <div class="flex justify-end gap-2 pt-1">
                                     <button type="button" class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800" onclick="closeUserEditModal('edit_user_modal_<?php echo e((string)$u['id']); ?>')">Cancel</button>
                                     <button class="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-950" type="submit">Update User</button>
@@ -461,6 +469,41 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!modal.classList.contains('hidden')) {
                 closeUserEditModal(modal.id);
             }
+        });
+    });
+
+    const buildRandomPassword = function(length) {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let result = '';
+        for (let i = 0; i < length; i += 1) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+    };
+
+    document.querySelectorAll('[data-password-generate]').forEach((button) => {
+        button.addEventListener('click', function() {
+            const targetId = button.getAttribute('data-target');
+            const input = targetId ? document.getElementById(targetId) : null;
+            if (!(input instanceof HTMLInputElement)) return;
+            input.value = buildRandomPassword(14);
+            input.type = 'text';
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+
+            input.focus();
+        });
+    });
+
+    document.querySelectorAll('[data-password-toggle]').forEach((button) => {
+        button.addEventListener('click', function() {
+            const targetId = button.getAttribute('data-target');
+            const input = targetId ? document.getElementById(targetId) : null;
+            if (!(input instanceof HTMLInputElement)) return;
+
+            const showing = input.type === 'text';
+            input.type = showing ? 'password' : 'text';
+            button.textContent = showing ? 'View' : 'Hide';
         });
     });
 });
