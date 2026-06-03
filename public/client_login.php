@@ -249,11 +249,8 @@ if (table_exists('directories')) {
                                     <div data-field-validation>
                                         <label class="mb-2 block text-sm font-semibold text-white/88">Password</label>
                                         <div class="relative">
-                                            <input id="staff_login_password" class="w-full rounded-xl border border-white/15 bg-white px-4 py-3 pr-20 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-sky-300 focus:ring-2 focus:ring-sky-200/30" type="password" name="password" placeholder="••••••••" data-validate="password" data-field-label="Password" required>
-                                            <button class="absolute inset-y-0 right-3 my-1 hidden items-center justify-center rounded-lg border border-slate-300 bg-white px-2 text-slate-700 transition hover:bg-slate-100" type="button" data-password-toggle data-password-target="staff_login_password" aria-label="Show password" title="Show password">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" data-password-eye-open><path d="M10 4c-4.182 0-7.765 2.5-9.5 6 1.735 3.5 5.318 6 9.5 6s7.765-2.5 9.5-6c-1.735-3.5-5.318-6-9.5-6Zm0 10.5A4.5 4.5 0 1 1 10 5.5a4.5 4.5 0 0 1 0 9Z"/></svg>
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="hidden h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" data-password-eye-closed><path d="M3.28 2.22a.75.75 0 1 0-1.06 1.06l1.7 1.7A11.74 11.74 0 0 0 .5 10c1.735 3.5 5.318 6 9.5 6 1.887 0 3.67-.51 5.198-1.4l1.522 1.52a.75.75 0 1 0 1.06-1.06L3.28 2.22Zm10.84 10.84A8.77 8.77 0 0 1 10 14.5c-3.287 0-6.143-1.85-7.72-4.5a9.87 9.87 0 0 1 2.725-3.2l1.82 1.82A3.98 3.98 0 0 0 6.5 10a3.5 3.5 0 0 0 4.878 3.228l2.742 2.742ZM13.5 10c0 .445-.083.87-.236 1.26l-3.524-3.524A3.5 3.5 0 0 1 13.5 10Zm3.22-.02a9.87 9.87 0 0 0-4.177-3.97.75.75 0 1 1 .664-1.346A11.34 11.34 0 0 1 19.5 10c-.796 1.604-1.972 2.96-3.408 3.96a.75.75 0 1 1-.858-1.23 9.84 9.84 0 0 0 1.486-2.75Z"/></svg>
-                                            </button>
+                                            <input id="staff_login_password" class="w-full rounded-xl border border-white/15 bg-white px-4 py-3 pr-28 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-sky-300 focus:ring-2 focus:ring-sky-200/30" type="password" name="password" placeholder="••••••••" data-validate="password" data-field-label="Password" required>
+                                            <button class="absolute inset-y-0 right-3 my-1 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100" type="button" data-password-toggle data-password-target="staff_login_password" aria-label="Show password">View</button>
                                             <span class="pointer-events-none absolute inset-y-0 right-20 flex items-center text-slate-300" data-validation-icon aria-hidden="true"></span>
                                         </div>
                                         <p class="mt-1 min-h-[1.25rem] text-xs font-medium text-white/70" data-validation-message aria-live="polite"></p>
@@ -282,11 +279,8 @@ if (table_exists('directories')) {
                                 <div data-field-validation>
                                     <label class="mb-2 block text-sm font-semibold text-white/88">Portal Password</label>
                                     <div class="relative">
-                                        <input id="client_login_password" class="w-full rounded-xl border border-white/15 bg-white px-4 py-3 pr-20 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-200/30" type="password" name="password" placeholder="••••••••" data-validate="password" data-field-label="Portal password" required>
-                                        <button class="absolute inset-y-0 right-3 my-1 hidden items-center justify-center rounded-lg border border-slate-300 bg-white px-2 text-slate-700 transition hover:bg-slate-100" type="button" data-password-toggle data-password-target="client_login_password" aria-label="Show portal password" title="Show portal password">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" data-password-eye-open><path d="M10 4c-4.182 0-7.765 2.5-9.5 6 1.735 3.5 5.318 6 9.5 6s7.765-2.5 9.5-6c-1.735-3.5-5.318-6-9.5-6Zm0 10.5A4.5 4.5 0 1 1 10 5.5a4.5 4.5 0 0 1 0 9Z"/></svg>
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="hidden h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" data-password-eye-closed><path d="M3.28 2.22a.75.75 0 1 0-1.06 1.06l1.7 1.7A11.74 11.74 0 0 0 .5 10c1.735 3.5 5.318 6 9.5 6 1.887 0 3.67-.51 5.198-1.4l1.522 1.52a.75.75 0 1 0 1.06-1.06L3.28 2.22Zm10.84 10.84A8.77 8.77 0 0 1 10 14.5c-3.287 0-6.143-1.85-7.72-4.5a9.87 9.87 0 0 1 2.725-3.2l1.82 1.82A3.98 3.98 0 0 0 6.5 10a3.5 3.5 0 0 0 4.878 3.228l2.742 2.742ZM13.5 10c0 .445-.083.87-.236 1.26l-3.524-3.524A3.5 3.5 0 0 1 13.5 10Zm3.22-.02a9.87 9.87 0 0 0-4.177-3.97.75.75 0 1 1 .664-1.346A11.34 11.34 0 0 1 19.5 10c-.796 1.604-1.972 2.96-3.408 3.96a.75.75 0 1 1-.858-1.23 9.84 9.84 0 0 0 1.486-2.75Z"/></svg>
-                                        </button>
+                                        <input id="client_login_password" class="w-full rounded-xl border border-white/15 bg-white px-4 py-3 pr-28 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-200/30" type="password" name="password" placeholder="••••••••" data-validate="password" data-field-label="Portal password" required>
+                                        <button class="absolute inset-y-0 right-3 my-1 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100" type="button" data-password-toggle data-password-target="client_login_password" aria-label="Show portal password">View</button>
                                         <span class="pointer-events-none absolute inset-y-0 right-20 flex items-center text-slate-300" data-validation-icon aria-hidden="true"></span>
                                     </div>
                                     <p class="mt-1 min-h-[1.25rem] text-xs font-medium text-white/70" data-validation-message aria-live="polite"></p>
@@ -534,47 +528,18 @@ if (table_exists('directories')) {
             });
 
             passwordToggleButtons.forEach((button) => {
-                const targetId = button.getAttribute('data-password-target');
-                const input = targetId ? document.getElementById(targetId) : null;
-                const openEye = button.querySelector('[data-password-eye-open]');
-                const closedEye = button.querySelector('[data-password-eye-closed]');
-
-                const syncButtonState = () => {
-                    if (!(input instanceof HTMLInputElement)) {
-                        return;
-                    }
-
-                    const hasValue = input.value.trim() !== '';
-                    button.classList.toggle('hidden', !hasValue);
-                    button.classList.toggle('inline-flex', hasValue);
-
-                    if (!hasValue) {
-                        input.type = 'password';
-                        button.setAttribute('aria-label', 'Show password');
-                    }
-
-                    const isVisible = input.type === 'text';
-                    openEye?.classList.toggle('hidden', isVisible);
-                    closedEye?.classList.toggle('hidden', !isVisible);
-                };
-
                 button.addEventListener('click', () => {
+                    const targetId = button.getAttribute('data-password-target');
+                    const input = targetId ? document.getElementById(targetId) : null;
                     if (!(input instanceof HTMLInputElement)) {
                         return;
                     }
 
                     const isVisible = input.type === 'text';
                     input.type = isVisible ? 'password' : 'text';
+                    button.textContent = isVisible ? 'View' : 'Hide';
                     button.setAttribute('aria-label', isVisible ? 'Show password' : 'Hide password');
-                    syncButtonState();
                 });
-
-                if (input instanceof HTMLInputElement) {
-                    input.addEventListener('input', syncButtonState);
-                    input.addEventListener('blur', syncButtonState);
-                }
-
-                syncButtonState();
             });
 
             document.addEventListener('invalid', (event) => {
