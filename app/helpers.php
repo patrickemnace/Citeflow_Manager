@@ -155,7 +155,18 @@ function ensure_upload_directory(string $directory): bool
         return false;
     }
 
-    return is_writable($directory);
+    if (!is_dir($directory)) {
+        return false;
+    }
+
+    $probe = rtrim($directory, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . '.write_test_' . uniqid('', true);
+    $written = @file_put_contents($probe, 'ok', LOCK_EX);
+    if ($written === false) {
+        return false;
+    }
+
+    @unlink($probe);
+    return true;
 }
 
 function resolve_upload_directory(string $subDirectory = ''): ?array
@@ -166,17 +177,42 @@ function resolve_upload_directory(string $subDirectory = ''): ?array
     }
 
     $baseCandidates = [];
-    $configured = rtrim((string)(app_config()['upload_dir'] ?? ''), DIRECTORY_SEPARATOR);
+    $configured = trim((string)(app_config()['upload_dir'] ?? ''));
     if ($configured !== '') {
         $baseCandidates[] = $configured;
+        if (!preg_match('/^(?:[a-zA-Z]:[\\\/]|\\\\|\/)/', $configured)) {
+            // Relative paths in config are resolved from app directory for portability.
+            $baseCandidates[] = __DIR__ . '/' . ltrim($configured, '/\\');
+            $baseCandidates[] = __DIR__ . '/../' . ltrim($configured, '/\\');
+        }
     }
 
-    $defaultUploadRoot = rtrim(__DIR__ . '/../public/uploads', DIRECTORY_SEPARATOR);
-    if (!in_array($defaultUploadRoot, $baseCandidates, true)) {
-        $baseCandidates[] = $defaultUploadRoot;
+    // Common deployment layouts: repository root/public/uploads and docroot/uploads.
+    $baseCandidates[] = __DIR__ . '/../public/uploads';
+    $baseCandidates[] = __DIR__ . '/../uploads';
+
+    $scriptDir = dirname((string)($_SERVER['SCRIPT_FILENAME'] ?? ''));
+    if ($scriptDir !== '' && $scriptDir !== '.') {
+        $baseCandidates[] = $scriptDir . '/uploads';
     }
 
-    foreach ($baseCandidates as $baseDir) {
+    $docRoot = trim((string)($_SERVER['DOCUMENT_ROOT'] ?? ''));
+    if ($docRoot !== '') {
+        $baseCandidates[] = rtrim($docRoot, '/\\') . '/uploads';
+    }
+
+    $normalizedCandidates = [];
+    foreach ($baseCandidates as $candidate) {
+        $normalized = rtrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, (string)$candidate), DIRECTORY_SEPARATOR);
+        if ($normalized === '') {
+            continue;
+        }
+        if (!in_array($normalized, $normalizedCandidates, true)) {
+            $normalizedCandidates[] = $normalized;
+        }
+    }
+
+    foreach ($normalizedCandidates as $baseDir) {
         $targetDir = $baseDir;
         if ($normalizedSubDir !== '') {
             $targetDir .= DIRECTORY_SEPARATOR . $normalizedSubDir;
