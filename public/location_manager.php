@@ -1013,8 +1013,9 @@ render_header('Location Manager');
                 </div>
             <?php endif; ?>
             <div class="border-b border-slate-200 dark:border-slate-700 px-5 py-4">
-                <div class="flex flex-wrap items-center justify-between gap-3">
-                    <div class="flex flex-wrap items-center gap-2">
+                <div class="flex w-full flex-col gap-3">
+                    <div class="flex w-full flex-wrap items-center justify-between gap-2">
+                        <div class="flex flex-wrap items-center gap-2">
                         <input id="citations_search" class="w-52 rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white px-3 py-2 text-sm dark:placeholder-slate-400" type="search" placeholder="Search citations...">
                         <select id="citations_type_filter" class="rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white px-3 py-2 text-sm">
                             <option value="">All Types</option>
@@ -1025,27 +1026,31 @@ render_header('Location Manager');
                             <option value="Competitor Citation">Competitor Citation</option>
                             <option value="Lead Aggregators">Lead Aggregators</option>
                         </select>
-                        <select id="citations_status_filter" class="rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white px-3 py-2 text-sm">
-                            <option value="">All Statuses</option>
-                        </select>
-                        <select id="citations_nap_filter" class="rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white px-3 py-2 text-sm">
-                            <option value="">All NAP Statuses</option>
-                            <option value="correct">Correct NAP</option>
-                            <option value="nap_error">NAP Error</option>
-                        </select>
                         <button id="citations_export" type="button" class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Export CSV</button>
+                        </div>
+                        <div class="flex flex-wrap items-center justify-end gap-2">
+                            <input type="hidden" form="bulk_assign_form" name="action" value="bulk_assign_citations">
+                            <select form="bulk_assign_form" name="bulk_assigned_to" class="rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white px-3 py-2 text-sm">
+                                <option value="">Set assignee: Unassigned</option>
+                                <?php foreach ($assignableUsers as $assignableUser): ?>
+                                    <option value="<?php echo e((string)$assignableUser['id']); ?>"><?php echo e((string)$assignableUser['full_name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <button form="bulk_assign_form" type="submit" class="rounded-lg bg-brand-600 dark:bg-brand-700 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700 dark:hover:bg-brand-600">Apply Assignment</button>
+                            <input type="hidden" form="bulk_delete_form" name="action" value="request_bulk_delete_citations">
+                            <button id="bulk_delete_submit" form="bulk_delete_form" type="submit" class="rounded-lg bg-rose-600 dark:bg-rose-700 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-700 dark:hover:bg-rose-600">Delete Selected</button>
+                        </div>
                     </div>
-                    <div class="flex flex-wrap items-center gap-2">
-                        <input type="hidden" form="bulk_assign_form" name="action" value="bulk_assign_citations">
-                        <select form="bulk_assign_form" name="bulk_assigned_to" class="rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white px-3 py-2 text-sm">
-                            <option value="">Set assignee: Unassigned</option>
-                            <?php foreach ($assignableUsers as $assignableUser): ?>
-                                <option value="<?php echo e((string)$assignableUser['id']); ?>"><?php echo e((string)$assignableUser['full_name']); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                        <button form="bulk_assign_form" type="submit" class="rounded-lg bg-brand-600 dark:bg-brand-700 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700 dark:hover:bg-brand-600">Apply Assignment</button>
-                        <input type="hidden" form="bulk_delete_form" name="action" value="request_bulk_delete_citations">
-                        <button id="bulk_delete_submit" form="bulk_delete_form" type="submit" class="rounded-lg bg-rose-600 dark:bg-rose-700 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-700 dark:hover:bg-rose-600">Delete Selected</button>
+                    <div id="citations_metrics_panel" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5">
+                        <p class="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Quick Metrics</p>
+                        <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
+                            <button type="button" class="citation-metric-btn inline-flex items-center gap-1 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700" data-metric-kind="status" data-metric-value="not_started" aria-pressed="false">Not Started <span class="citation-metric-count min-w-[20px] rounded-full bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 text-center" data-metric-count>0</span></button>
+                            <button type="button" class="citation-metric-btn inline-flex items-center gap-1 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700" data-metric-kind="status" data-metric-value="in_progress" aria-pressed="false">In Progress <span class="citation-metric-count min-w-[20px] rounded-full bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 text-center" data-metric-count>0</span></button>
+                            <button type="button" class="citation-metric-btn inline-flex items-center gap-1 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700" data-metric-kind="status" data-metric-value="pending_submission" aria-pressed="false">Pending <span class="citation-metric-count min-w-[20px] rounded-full bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 text-center" data-metric-count>0</span></button>
+                            <button type="button" class="citation-metric-btn inline-flex items-center gap-1 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700" data-metric-kind="status" data-metric-value="live" aria-pressed="false">Live <span class="citation-metric-count min-w-[20px] rounded-full bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 text-center" data-metric-count>0</span></button>
+                            <button type="button" class="citation-metric-btn inline-flex items-center gap-1 rounded-full border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-1 text-[11px] font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/30" data-metric-kind="nap" data-metric-value="correct" aria-pressed="false">Correct NAP <span class="citation-metric-count min-w-[20px] rounded-full bg-emerald-100 dark:bg-emerald-900/40 px-1.5 py-0.5 text-center" data-metric-count>0</span></button>
+                            <button type="button" class="citation-metric-btn inline-flex items-center gap-1 rounded-full border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-900/20 px-2.5 py-1 text-[11px] font-semibold text-rose-800 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/30" data-metric-kind="nap" data-metric-value="nap_error" aria-pressed="false">NAP Error <span class="citation-metric-count min-w-[20px] rounded-full bg-rose-100 dark:bg-rose-900/40 px-1.5 py-0.5 text-center" data-metric-count>0</span></button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1090,6 +1095,8 @@ render_header('Location Manager');
                                         $assigneeFirstName = (string)$nameParts[0];
                                     }
                                 }
+                                $rowStatus = (string)($c['status'] ?? 'not_started');
+                                $rowNapStatus = $rowStatus === 'live' ? (string)($c['nap_status'] ?? 'correct') : '';
                             ?>
                             <tr
                                 class="align-middle hover:bg-slate-50 dark:hover:bg-slate-800"
@@ -1097,8 +1104,8 @@ render_header('Location Manager');
                                 data-directory="<?php echo e((string)$c['directory_name']); ?>"
                                 data-directory-website="<?php echo e((string)($c['directory_website'] ?? '')); ?>"
                                 data-citation-type="<?php echo e((string)$c['citation_type']); ?>"
-                                data-status="<?php echo e((string)$c['status']); ?>"
-                                data-nap-status="<?php echo e((string)($c['nap_status'] ?? 'correct')); ?>"
+                                data-status="<?php echo e($rowStatus); ?>"
+                                data-nap-status="<?php echo e($rowNapStatus); ?>"
                                 data-assigned-to="<?php echo e((string)($c['assigned_to'] ?? '')); ?>"
                                 data-priority-level="<?php echo e((string)($c['priority_level'] ?? 'medium')); ?>"
                                 data-url="<?php echo e((string)($c['submitted_url'] ?? '')); ?>"
@@ -2022,10 +2029,9 @@ render_header('Location Manager');
     }, true);
 
     const citationsTypeFilter = document.getElementById('citations_type_filter');
-    const citationsStatusFilter = document.getElementById('citations_status_filter');
-    const citationsNapFilter = document.getElementById('citations_nap_filter');
     const citationsSearch = document.getElementById('citations_search');
     const citationsExport = document.getElementById('citations_export');
+    const citationMetricButtons = Array.from(document.querySelectorAll('.citation-metric-btn'));
     const citationsTbody = document.getElementById('citations_tbody');
     const noResultsRow = document.getElementById('citations_no_results');
     const bulkAssignForm = document.getElementById('bulk_assign_form');
@@ -2033,6 +2039,8 @@ render_header('Location Manager');
     const citationsSelectAll = document.getElementById('citations_select_all');
     const submitListingTriggers = Array.from(document.querySelectorAll('.submit-listing-trigger'));
     const locationManagerBaseUrl = <?php echo json_encode(app_config()['base_url']); ?>;
+    let activeStatusMetric = '';
+    let activeNapMetric = '';
 
     const statusBadgeClassMap = {
         not_started: 'bg-gray-100 text-gray-800',
@@ -2106,6 +2114,9 @@ render_header('Location Manager');
         }
 
         row.setAttribute('data-status', status);
+        if (status !== 'live') {
+            row.setAttribute('data-nap-status', '');
+        }
         const badge = row.querySelector('td:nth-child(5) span');
         if (badge) {
             badge.className = `inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusBadgeClassMap[status] || 'bg-slate-100 text-slate-800'}`;
@@ -2113,23 +2124,68 @@ render_header('Location Manager');
         }
     };
 
-    const populateStatusFilterOptions = () => {
-        if (!citationsStatusFilter) {
+    const updateCitationMetrics = () => {
+        if (!citationMetricButtons.length) {
             return;
         }
 
-        const uniqueStatuses = Array.from(new Set(
-            getCitationRows()
-                .map((row) => (row.getAttribute('data-status') || '').trim())
-                .filter((status) => status !== '')
-        )).sort((a, b) => a.localeCompare(b));
+        const rows = getCitationRows();
+        const statusCounts = {
+            not_started: 0,
+            in_progress: 0,
+            pending_submission: 0,
+            live: 0
+        };
+        const napCounts = {
+            correct: 0,
+            nap_error: 0
+        };
 
-        citationsStatusFilter.innerHTML = '<option value="">All Statuses</option>';
-        uniqueStatuses.forEach((status) => {
-            const option = document.createElement('option');
-            option.value = status;
-            option.textContent = toStatusLabel(status);
-            citationsStatusFilter.appendChild(option);
+        rows.forEach((row) => {
+            const status = (row.getAttribute('data-status') || '').trim();
+            const napStatus = (row.getAttribute('data-nap-status') || '').trim();
+
+            if (Object.prototype.hasOwnProperty.call(statusCounts, status)) {
+                statusCounts[status] += 1;
+            }
+            if (Object.prototype.hasOwnProperty.call(napCounts, napStatus)) {
+                napCounts[napStatus] += 1;
+            }
+        });
+
+        citationMetricButtons.forEach((button) => {
+            const metricKind = String(button.getAttribute('data-metric-kind') || '').trim();
+            const metricValue = String(button.getAttribute('data-metric-value') || '').trim();
+            const countEl = button.querySelector('[data-metric-count]');
+            if (!countEl) {
+                return;
+            }
+
+            let count = 0;
+            if (metricKind === 'status') {
+                count = statusCounts[metricValue] || 0;
+            } else if (metricKind === 'nap') {
+                count = napCounts[metricValue] || 0;
+            }
+
+            countEl.textContent = String(count);
+        });
+    };
+
+    const updateMetricActiveState = () => {
+        if (!citationMetricButtons.length) {
+            return;
+        }
+
+        citationMetricButtons.forEach((button) => {
+            const metricKind = String(button.getAttribute('data-metric-kind') || '').trim();
+            const metricValue = String(button.getAttribute('data-metric-value') || '').trim();
+            const isActive = (metricKind === 'status' && activeStatusMetric === metricValue)
+                || (metricKind === 'nap' && activeNapMetric === metricValue);
+
+            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+            button.classList.toggle('ring-2', isActive);
+            button.classList.toggle('ring-brand-400', isActive);
         });
     };
 
@@ -2140,8 +2196,8 @@ render_header('Location Manager');
         }
 
         const selectedType = citationsTypeFilter ? citationsTypeFilter.value.trim().toLowerCase() : '';
-        const selectedStatus = citationsStatusFilter ? citationsStatusFilter.value.trim().toLowerCase() : '';
-        const selectedNapStatus = citationsNapFilter ? citationsNapFilter.value.trim().toLowerCase() : '';
+        const selectedStatus = activeStatusMetric.toLowerCase();
+        const selectedNapStatus = activeNapMetric.toLowerCase();
         const query = citationsSearch ? citationsSearch.value.trim().toLowerCase() : '';
         let visibleCount = 0;
 
@@ -2184,6 +2240,7 @@ render_header('Location Manager');
         }
 
         updateSelectAllState();
+        updateMetricActiveState();
     };
 
     const csvEscape = (value) => {
@@ -2237,18 +2294,29 @@ render_header('Location Manager');
     if (citationsTypeFilter) {
         citationsTypeFilter.addEventListener('change', applyCitationFilters);
     }
-    if (citationsStatusFilter) {
-        citationsStatusFilter.addEventListener('change', applyCitationFilters);
-    }
-    if (citationsNapFilter) {
-        citationsNapFilter.addEventListener('change', applyCitationFilters);
-    }
     if (citationsSearch) {
         citationsSearch.addEventListener('input', applyCitationFilters);
     }
     if (citationsExport) {
         citationsExport.addEventListener('click', exportFilteredCitations);
     }
+
+    citationMetricButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const metricKind = String(button.getAttribute('data-metric-kind') || '').trim();
+            const metricValue = String(button.getAttribute('data-metric-value') || '').trim();
+
+            if (metricKind === 'status') {
+                activeStatusMetric = activeStatusMetric === metricValue ? '' : metricValue;
+                activeNapMetric = '';
+            } else if (metricKind === 'nap') {
+                activeNapMetric = activeNapMetric === metricValue ? '' : metricValue;
+                activeStatusMetric = '';
+            }
+
+            applyCitationFilters();
+        });
+    });
 
     if (citationsSelectAll) {
         citationsSelectAll.addEventListener('change', () => {
@@ -2319,7 +2387,7 @@ render_header('Location Manager');
                     if (row) {
                         applyStatusToRow(row, String(payload.status || 'in_progress'));
                     }
-                    populateStatusFilterOptions();
+                    updateCitationMetrics();
                     applyCitationFilters();
                 }
             } catch (_) {
@@ -2330,7 +2398,7 @@ render_header('Location Manager');
         });
     });
 
-    populateStatusFilterOptions();
+    updateCitationMetrics();
     applyCitationFilters();
     syncBulkDeleteFields();
 </script>
