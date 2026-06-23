@@ -2130,6 +2130,7 @@ render_header('Location Manager');
         }
 
         const rows = getCitationRows();
+        const selectedType = citationsTypeFilter ? citationsTypeFilter.value.trim().toLowerCase() : '';
         const statusCounts = {
             not_started: 0,
             in_progress: 0,
@@ -2142,8 +2143,14 @@ render_header('Location Manager');
         };
 
         rows.forEach((row) => {
+            const type = (row.getAttribute('data-citation-type') || '').toLowerCase();
             const status = (row.getAttribute('data-status') || '').trim();
             const napStatus = (row.getAttribute('data-nap-status') || '').trim();
+
+            const typeMatch = selectedType === '' || type === selectedType;
+            if (!typeMatch) {
+                return;
+            }
 
             if (Object.prototype.hasOwnProperty.call(statusCounts, status)) {
                 statusCounts[status] += 1;
@@ -2241,6 +2248,7 @@ render_header('Location Manager');
 
         updateSelectAllState();
         updateMetricActiveState();
+        updateCitationMetrics();
     };
 
     const csvEscape = (value) => {
@@ -2292,7 +2300,10 @@ render_header('Location Manager');
     };
 
     if (citationsTypeFilter) {
-        citationsTypeFilter.addEventListener('change', applyCitationFilters);
+        citationsTypeFilter.addEventListener('change', () => {
+            updateCitationMetrics();
+            applyCitationFilters();
+        });
     }
     if (citationsSearch) {
         citationsSearch.addEventListener('input', applyCitationFilters);
