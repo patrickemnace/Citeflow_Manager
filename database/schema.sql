@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS listing_tasks (
     business_id INT NOT NULL,
     directory_id INT NOT NULL,
     assigned_to INT NULL,
-    status ENUM('not_started','in_progress','pending_submission','live','submitted','rejected','needs_edit') NOT NULL DEFAULT 'not_started',
+    status ENUM('not_started','in_progress','pending_submission','unable_to_submit','live','submitted','rejected','needs_edit') NOT NULL DEFAULT 'not_started',
     nap_status VARCHAR(30) NOT NULL DEFAULT 'correct',
     priority_level VARCHAR(30) NOT NULL DEFAULT 'medium',
     submitted_url VARCHAR(255) DEFAULT '',
