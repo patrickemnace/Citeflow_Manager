@@ -195,6 +195,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && post('action') === 'add_citation') 
         redirect('/location_manager.php?business_id=' . $businessId);
     }
 
+    if ($status === 'unable_to_submit' && trim((string)$notes) === '') {
+        set_flash('err', 'Comment is required when status is Unable to Submit.');
+        redirect('/location_manager.php?business_id=' . $businessId);
+    }
+
     if ($status === 'pending_submission' && !has_uploaded_submission_proof('submission_proof')) {
         set_flash('err', 'Please upload a proof screenshot when status is Pending Submission.');
         redirect('/location_manager.php?business_id=' . $businessId);
@@ -466,6 +471,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && post('action') === 'update_citation
 
     if ($status === 'live' && $submittedUrl === '') {
         redirect('/location_manager.php?business_id=' . $businessId . '&open_citations=1&citations_notice=' . rawurlencode('Citation URL is required when status is Live.') . '&citations_notice_type=err');
+    }
+
+    if ($status === 'unable_to_submit' && trim((string)$notes) === '') {
+        redirect('/location_manager.php?business_id=' . $businessId . '&open_citations=1&citations_notice=' . rawurlencode('Comment is required when status is Unable to Submit.') . '&citations_notice_type=err');
     }
 
     $existingStmt = db()->prepare('SELECT lt.assigned_to, lt.status, d.name AS directory_name, d.website AS directory_website
@@ -1546,6 +1555,9 @@ render_header('Location Manager');
     const editSubmissionProofInput = document.getElementById('edit_submission_proof');
     const editSubmissionProofHint = document.getElementById('edit_submission_proof_hint');
     const editCitationNotesInput = document.getElementById('edit_citation_notes');
+    const addCitationsActionInput = document.querySelector('input[name="action"][value="add_citations_bulk"]');
+    const addCitationsForm = addCitationsActionInput ? addCitationsActionInput.closest('form') : null;
+    const addCitationNotesInput = addCitationsForm ? addCitationsForm.querySelector('textarea[name="notes"]') : null;
     const addCitationStatusInput = document.getElementById('add_citation_status');
     const addNapStatusRow = document.getElementById('add_nap_status_row');
     const addNapStatusInput = document.getElementById('add_nap_status');
@@ -1866,12 +1878,28 @@ render_header('Location Manager');
         rowEl.classList.toggle('hidden', !shouldShow);
     };
 
+    const requiredNoteMessage = 'You must have a note when status is Unable to Submit.';
+
+    const updateRequiredNoteValidity = (textarea) => {
+        if (!(textarea instanceof HTMLTextAreaElement)) {
+            return;
+        }
+
+        if (!textarea.required) {
+            textarea.setCustomValidity('');
+            return;
+        }
+
+        textarea.setCustomValidity(textarea.value.trim() === '' ? requiredNoteMessage : '');
+    };
+
     const updateCitationFieldsByStatus = (mode) => {
         if (mode === 'add') {
             const status = addCitationStatusInput ? String(addCitationStatusInput.value || '').trim() : 'not_started';
             const showProof = status === 'pending_submission';
             const showNap = status === 'live';
             const showUrl = status === 'live';
+            const requireNotes = status === 'unable_to_submit';
 
             setFieldVisibility(addSubmissionProofRow, showProof);
             setFieldVisibility(addNapStatusRow, showNap);
@@ -1891,6 +1919,10 @@ render_header('Location Manager');
             if (addNapStatusInput) {
                 addNapStatusInput.required = showNap;
             }
+            if (addCitationNotesInput instanceof HTMLTextAreaElement) {
+                addCitationNotesInput.required = requireNotes;
+                updateRequiredNoteValidity(addCitationNotesInput);
+            }
             return;
         }
 
@@ -1899,6 +1931,7 @@ render_header('Location Manager');
         const showProof = status === 'pending_submission';
         const showNap = status === 'live';
         const showUrl = status === 'live';
+        const requireNotes = status === 'unable_to_submit';
 
         setFieldVisibility(editSubmissionProofRow, showProof);
         setFieldVisibility(editNapStatusRow, showNap);
@@ -1922,7 +1955,21 @@ render_header('Location Manager');
         if (editNapStatusInput) {
             editNapStatusInput.required = showNap;
         }
+        if (editCitationNotesInput) {
+            editCitationNotesInput.required = requireNotes;
+            updateRequiredNoteValidity(editCitationNotesInput);
+        }
     };
+
+    if (addCitationNotesInput instanceof HTMLTextAreaElement) {
+        addCitationNotesInput.addEventListener('input', () => updateRequiredNoteValidity(addCitationNotesInput));
+        addCitationNotesInput.addEventListener('invalid', () => updateRequiredNoteValidity(addCitationNotesInput));
+    }
+
+    if (editCitationNotesInput instanceof HTMLTextAreaElement) {
+        editCitationNotesInput.addEventListener('input', () => updateRequiredNoteValidity(editCitationNotesInput));
+        editCitationNotesInput.addEventListener('invalid', () => updateRequiredNoteValidity(editCitationNotesInput));
+    }
 
     if (addCitationStatusInput) {
         addCitationStatusInput.addEventListener('change', () => updateCitationFieldsByStatus('add'));
