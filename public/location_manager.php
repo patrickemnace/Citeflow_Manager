@@ -1524,6 +1524,7 @@ render_header('Location Manager');
     const toggleMetricsBtn = document.getElementById('toggle_metrics_btn');
     const citationsMetricsContent = document.getElementById('citations_metrics_content');
     const toggleMetricsIcon = document.getElementById('toggle_metrics_icon');
+    const citationEditModal = document.getElementById('citation_edit_modal');
     const closeCitationEditModalBtn = document.getElementById('close_citation_edit_modal');
     const citationEditModalBackdrop = document.getElementById('citation_edit_modal_backdrop');
     const proofPreviewModal = document.getElementById('proof_preview_modal');
