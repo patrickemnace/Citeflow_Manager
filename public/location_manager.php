@@ -114,6 +114,7 @@ $assignableUserIds = array_values(array_map(static fn (array $row): int => (int)
 $completeness = business_completeness($business);
 $allowedCitationStatuses = ['not_started', 'in_progress', 'pending_submission', 'unable_to_submit', 'live'];
 $allowedNapStatuses = ['correct', 'nap_error', 'pending_update_edit_request', 'unable_to_claim'];
+$napStatusesRequiringComment = ['nap_error', 'pending_update_edit_request', 'unable_to_claim'];
 $pendingLocationBulkDeleteRows = [];
 
 function has_uploaded_submission_proof(string $fieldName): bool
@@ -197,6 +198,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && post('action') === 'add_citation') 
 
     if ($status === 'unable_to_submit' && trim((string)$notes) === '') {
         set_flash('err', 'Comment is required when status is Unable to Submit.');
+        redirect('/location_manager.php?business_id=' . $businessId);
+    }
+
+    if ($status === 'live' && in_array($napStatus, $napStatusesRequiringComment, true) && trim((string)$notes) === '') {
+        set_flash('err', 'Comment is required for the selected Live URL Status.');
         redirect('/location_manager.php?business_id=' . $businessId);
     }
 
@@ -475,6 +481,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && post('action') === 'update_citation
 
     if ($status === 'unable_to_submit' && trim((string)$notes) === '') {
         redirect('/location_manager.php?business_id=' . $businessId . '&open_citations=1&citations_notice=' . rawurlencode('Comment is required when status is Unable to Submit.') . '&citations_notice_type=err');
+    }
+
+    if ($status === 'live' && in_array($napStatus, $napStatusesRequiringComment, true) && trim((string)$notes) === '') {
+        redirect('/location_manager.php?business_id=' . $businessId . '&open_citations=1&citations_notice=' . rawurlencode('Comment is required for the selected Live URL Status.') . '&citations_notice_type=err');
     }
 
     $existingStmt = db()->prepare('SELECT lt.assigned_to, lt.status, d.name AS directory_name, d.website AS directory_website
@@ -1878,9 +1888,28 @@ render_header('Location Manager');
         rowEl.classList.toggle('hidden', !shouldShow);
     };
 
-    const requiredNoteMessage = 'You must have a note when status is Unable to Submit.';
+    const napStatusesRequiringComment = ['nap_error', 'pending_update_edit_request', 'unable_to_claim'];
 
-    const updateRequiredNoteValidity = (textarea) => {
+    const getRequiredNoteMessage = (mode) => {
+        if (mode === 'edit') {
+            const status = editCitationStatusInput ? String(editCitationStatusInput.value || '').trim() : '';
+            const napStatus = editNapStatusInput ? String(editNapStatusInput.value || '').trim() : '';
+
+            if (status === 'live' && napStatusesRequiringComment.includes(napStatus)) {
+                return 'You must add a note for the selected Live URL Status.';
+            }
+
+            if (status === 'unable_to_submit') {
+                return 'You must add a note when status is Unable to Submit.';
+            }
+
+            return 'Comment is required.';
+        }
+
+        return 'You must add a note when status is Unable to Submit.';
+    };
+
+    const updateRequiredNoteValidity = (textarea, mode) => {
         if (!(textarea instanceof HTMLTextAreaElement)) {
             return;
         }
@@ -1890,7 +1919,7 @@ render_header('Location Manager');
             return;
         }
 
-        textarea.setCustomValidity(textarea.value.trim() === '' ? requiredNoteMessage : '');
+        textarea.setCustomValidity(textarea.value.trim() === '' ? getRequiredNoteMessage(mode) : '');
     };
 
     const updateCitationFieldsByStatus = (mode) => {
@@ -1921,7 +1950,7 @@ render_header('Location Manager');
             }
             if (addCitationNotesInput instanceof HTMLTextAreaElement) {
                 addCitationNotesInput.required = requireNotes;
-                updateRequiredNoteValidity(addCitationNotesInput);
+                updateRequiredNoteValidity(addCitationNotesInput, 'add');
             }
             return;
         }
@@ -1931,7 +1960,8 @@ render_header('Location Manager');
         const showProof = status === 'pending_submission';
         const showNap = status === 'live';
         const showUrl = status === 'live';
-        const requireNotes = status === 'unable_to_submit';
+        const napStatus = editNapStatusInput ? String(editNapStatusInput.value || '').trim() : '';
+        const requireNotes = status === 'unable_to_submit' || (status === 'live' && napStatusesRequiringComment.includes(napStatus));
 
         setFieldVisibility(editSubmissionProofRow, showProof);
         setFieldVisibility(editNapStatusRow, showNap);
@@ -1957,18 +1987,18 @@ render_header('Location Manager');
         }
         if (editCitationNotesInput) {
             editCitationNotesInput.required = requireNotes;
-            updateRequiredNoteValidity(editCitationNotesInput);
+            updateRequiredNoteValidity(editCitationNotesInput, 'edit');
         }
     };
 
     if (addCitationNotesInput instanceof HTMLTextAreaElement) {
-        addCitationNotesInput.addEventListener('input', () => updateRequiredNoteValidity(addCitationNotesInput));
-        addCitationNotesInput.addEventListener('invalid', () => updateRequiredNoteValidity(addCitationNotesInput));
+        addCitationNotesInput.addEventListener('input', () => updateRequiredNoteValidity(addCitationNotesInput, 'add'));
+        addCitationNotesInput.addEventListener('invalid', () => updateRequiredNoteValidity(addCitationNotesInput, 'add'));
     }
 
     if (editCitationNotesInput instanceof HTMLTextAreaElement) {
-        editCitationNotesInput.addEventListener('input', () => updateRequiredNoteValidity(editCitationNotesInput));
-        editCitationNotesInput.addEventListener('invalid', () => updateRequiredNoteValidity(editCitationNotesInput));
+        editCitationNotesInput.addEventListener('input', () => updateRequiredNoteValidity(editCitationNotesInput, 'edit'));
+        editCitationNotesInput.addEventListener('invalid', () => updateRequiredNoteValidity(editCitationNotesInput, 'edit'));
     }
 
     if (addCitationStatusInput) {
@@ -1979,6 +2009,9 @@ render_header('Location Manager');
     }
     if (editCitationStatusInput) {
         editCitationStatusInput.addEventListener('change', () => updateCitationFieldsByStatus('edit'));
+    }
+    if (editNapStatusInput) {
+        editNapStatusInput.addEventListener('change', () => updateCitationFieldsByStatus('edit'));
     }
     if (editCitationUrlInput) {
         editCitationUrlInput.addEventListener('input', () => updateCitationFieldsByStatus('edit'));
