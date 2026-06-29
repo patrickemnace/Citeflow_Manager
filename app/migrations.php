@@ -457,7 +457,7 @@ function ensure_runtime_schema(): void
     }
 
     try {
-        db()->exec("ALTER TABLE listing_tasks MODIFY COLUMN status ENUM('not_started','in_progress','pending_submission','live','submitted','rejected','needs_edit') NOT NULL DEFAULT 'not_started'");
+        db()->exec("ALTER TABLE listing_tasks MODIFY COLUMN status ENUM('not_started','in_progress','pending_submission','unable_to_submit','live','submitted','rejected','needs_edit') NOT NULL DEFAULT 'not_started'");
     } catch (Throwable $e) {
         // Column definition may already match.
     }
