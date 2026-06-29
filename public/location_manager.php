@@ -112,8 +112,8 @@ $assignableUsers = db()->query("SELECT id, full_name, role, designation
                                                                 ORDER BY full_name ASC")->fetchAll();
 $assignableUserIds = array_values(array_map(static fn (array $row): int => (int)($row['id'] ?? 0), $assignableUsers));
 $completeness = business_completeness($business);
-$allowedCitationStatuses = ['not_started', 'in_progress', 'pending_submission', 'live'];
-$allowedNapStatuses = ['correct', 'nap_error'];
+$allowedCitationStatuses = ['not_started', 'in_progress', 'pending_submission', 'unable_to_submit', 'live'];
+$allowedNapStatuses = ['correct', 'nap_error', 'pending_update_edit_request', 'unable_to_claim'];
 $pendingLocationBulkDeleteRows = [];
 
 function has_uploaded_submission_proof(string $fieldName): bool
@@ -1012,12 +1012,12 @@ render_header('Location Manager');
                     </div>
                 </div>
             <?php endif; ?>
-            <div class="border-b border-slate-200 dark:border-slate-700 px-5 py-4">
-                <div class="flex w-full flex-col gap-3">
-                    <div class="flex w-full flex-wrap items-center justify-between gap-2">
-                        <div class="flex flex-wrap items-center gap-2">
-                        <input id="citations_search" class="w-52 rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white px-3 py-2 text-sm dark:placeholder-slate-400" type="search" placeholder="Search citations...">
-                        <select id="citations_type_filter" class="rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white px-3 py-2 text-sm">
+            <div class="border-b border-slate-200 dark:border-slate-700 px-5 py-3">
+                <div class="flex w-full flex-col gap-2">
+                    <div class="flex w-full flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                        <div class="flex w-full sm:flex-1 flex-wrap items-center gap-2">
+                        <input id="citations_search" class="w-full sm:flex-1 sm:min-w-[180px] rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white px-3 py-2 text-sm dark:placeholder-slate-400" type="search" placeholder="Search citations...">
+                        <select id="citations_type_filter" class="rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white px-3 py-2 text-sm hidden sm:inline-block">
                             <option value="">All Types</option>
                             <option value="Manual Submission">Manual Submission</option>
                             <option value="Citation Builder">Citation Builder</option>
@@ -1026,30 +1026,48 @@ render_header('Location Manager');
                             <option value="Competitor Citation">Competitor Citation</option>
                             <option value="Lead Aggregators">Lead Aggregators</option>
                         </select>
-                        <button id="citations_export" type="button" class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Export CSV</button>
+                        <button id="citations_sort_btn" type="button" class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Sort: Newest</button>
+                        <button id="citations_export" type="button" class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hidden sm:inline-block">Export CSV</button>
                         </div>
-                        <div class="flex flex-wrap items-center justify-end gap-2">
+                        <div class="flex w-full sm:w-auto flex-wrap items-center justify-between sm:justify-end gap-2">
                             <input type="hidden" form="bulk_assign_form" name="action" value="bulk_assign_citations">
-                            <select form="bulk_assign_form" name="bulk_assigned_to" class="rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white px-3 py-2 text-sm">
-                                <option value="">Set assignee: Unassigned</option>
+                            <select form="bulk_assign_form" name="bulk_assigned_to" class="rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white px-3 py-2 text-sm text-xs">
+                                <option value="">Assignee</option>
                                 <?php foreach ($assignableUsers as $assignableUser): ?>
                                     <option value="<?php echo e((string)$assignableUser['id']); ?>"><?php echo e((string)$assignableUser['full_name']); ?></option>
                                 <?php endforeach; ?>
                             </select>
-                            <button form="bulk_assign_form" type="submit" class="rounded-lg bg-brand-600 dark:bg-brand-700 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700 dark:hover:bg-brand-600">Apply Assignment</button>
+                            <button form="bulk_assign_form" type="submit" class="rounded-lg bg-brand-600 dark:bg-brand-700 px-2 sm:px-3 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-brand-700 dark:hover:bg-brand-600 whitespace-nowrap">Assign</button>
                             <input type="hidden" form="bulk_delete_form" name="action" value="request_bulk_delete_citations">
-                            <button id="bulk_delete_submit" form="bulk_delete_form" type="submit" class="rounded-lg bg-rose-600 dark:bg-rose-700 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-700 dark:hover:bg-rose-600">Delete Selected</button>
+                            <button id="bulk_delete_submit" form="bulk_delete_form" type="submit" class="rounded-lg bg-rose-600 dark:bg-rose-700 px-2 sm:px-3 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-rose-700 dark:hover:bg-rose-600 whitespace-nowrap">Delete</button>
                         </div>
                     </div>
+                    <button id="toggle_metrics_btn" type="button" aria-expanded="true" aria-controls="citations_metrics_content" class="w-full sm:hidden rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-between">
+                        <span>Metrics</span>
+                        <span id="toggle_metrics_icon" class="text-sm">▲</span>
+                    </button>
                     <div id="citations_metrics_panel" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5">
                         <p class="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Quick Metrics</p>
-                        <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
-                            <button type="button" class="citation-metric-btn inline-flex items-center gap-1 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700" data-metric-kind="status" data-metric-value="not_started" aria-pressed="false">Not Started <span class="citation-metric-count min-w-[20px] rounded-full bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 text-center" data-metric-count>0</span></button>
-                            <button type="button" class="citation-metric-btn inline-flex items-center gap-1 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700" data-metric-kind="status" data-metric-value="in_progress" aria-pressed="false">In Progress <span class="citation-metric-count min-w-[20px] rounded-full bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 text-center" data-metric-count>0</span></button>
-                            <button type="button" class="citation-metric-btn inline-flex items-center gap-1 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700" data-metric-kind="status" data-metric-value="pending_submission" aria-pressed="false">Pending <span class="citation-metric-count min-w-[20px] rounded-full bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 text-center" data-metric-count>0</span></button>
-                            <button type="button" class="citation-metric-btn inline-flex items-center gap-1 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700" data-metric-kind="status" data-metric-value="live" aria-pressed="false">Live <span class="citation-metric-count min-w-[20px] rounded-full bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 text-center" data-metric-count>0</span></button>
-                            <button type="button" class="citation-metric-btn inline-flex items-center gap-1 rounded-full border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-1 text-[11px] font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/30" data-metric-kind="nap" data-metric-value="correct" aria-pressed="false">Correct NAP <span class="citation-metric-count min-w-[20px] rounded-full bg-emerald-100 dark:bg-emerald-900/40 px-1.5 py-0.5 text-center" data-metric-count>0</span></button>
-                            <button type="button" class="citation-metric-btn inline-flex items-center gap-1 rounded-full border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-900/20 px-2.5 py-1 text-[11px] font-semibold text-rose-800 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/30" data-metric-kind="nap" data-metric-value="nap_error" aria-pressed="false">NAP Error <span class="citation-metric-count min-w-[20px] rounded-full bg-rose-100 dark:bg-rose-900/40 px-1.5 py-0.5 text-center" data-metric-count>0</span></button>
+                        <div id="citations_metrics_content" class="mt-2 grid gap-2 sm:grid-cols-2 auto-rows-max">
+                            <section class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/40 px-2.5 py-2 min-w-0">
+                                <p class="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Citation Status</p>
+                                <div class="mt-1.5 flex items-center gap-1.5 overflow-x-auto whitespace-nowrap pb-1 [scrollbar-width:thin]">
+                                    <button type="button" class="citation-metric-btn inline-flex items-center gap-1 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700" data-metric-kind="status" data-metric-value="not_started" aria-pressed="false">Not Started <span class="citation-metric-count min-w-[20px] rounded-full bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 text-center" data-metric-count>0</span></button>
+                                    <button type="button" class="citation-metric-btn inline-flex items-center gap-1 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700" data-metric-kind="status" data-metric-value="in_progress" aria-pressed="false">In Progress <span class="citation-metric-count min-w-[20px] rounded-full bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 text-center" data-metric-count>0</span></button>
+                                    <button type="button" class="citation-metric-btn inline-flex items-center gap-1 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700" data-metric-kind="status" data-metric-value="pending_submission" aria-pressed="false">Pending <span class="citation-metric-count min-w-[20px] rounded-full bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 text-center" data-metric-count>0</span></button>
+                                    <button type="button" class="citation-metric-btn inline-flex items-center gap-1 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700" data-metric-kind="status" data-metric-value="unable_to_submit" aria-pressed="false">Unable to Submit <span class="citation-metric-count min-w-[20px] rounded-full bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 text-center" data-metric-count>0</span></button>
+                                    <button type="button" class="citation-metric-btn inline-flex items-center gap-1 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700" data-metric-kind="status" data-metric-value="live" aria-pressed="false">Live <span class="citation-metric-count min-w-[20px] rounded-full bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 text-center" data-metric-count>0</span></button>
+                                </div>
+                            </section>
+                            <section class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/40 px-2.5 py-2 min-w-0">
+                                <p class="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Live URL Status</p>
+                                <div class="mt-1.5 flex items-center gap-1.5 overflow-x-auto whitespace-nowrap pb-1 [scrollbar-width:thin]">
+                                    <button type="button" class="citation-metric-btn inline-flex items-center gap-1 rounded-full border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-1 text-[11px] font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/30" data-metric-kind="nap" data-metric-value="correct" aria-pressed="false">Correct NAP <span class="citation-metric-count min-w-[20px] rounded-full bg-emerald-100 dark:bg-emerald-900/40 px-1.5 py-0.5 text-center" data-metric-count>0</span></button>
+                                    <button type="button" class="citation-metric-btn inline-flex items-center gap-1 rounded-full border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-900/20 px-2.5 py-1 text-[11px] font-semibold text-rose-800 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/30" data-metric-kind="nap" data-metric-value="nap_error" aria-pressed="false">NAP Error <span class="citation-metric-count min-w-[20px] rounded-full bg-rose-100 dark:bg-rose-900/40 px-1.5 py-0.5 text-center" data-metric-count>0</span></button>
+                                    <button type="button" class="citation-metric-btn inline-flex items-center gap-1 rounded-full border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/40 px-2.5 py-1 text-[11px] font-semibold text-amber-800 dark:text-amber-100 hover:bg-amber-100 dark:hover:bg-amber-900/60" data-metric-kind="nap" data-metric-value="pending_update_edit_request" aria-pressed="false">Pending Update/Edit Request <span class="citation-metric-count min-w-[20px] rounded-full bg-amber-100 dark:bg-amber-800/70 px-1.5 py-0.5 text-center" data-metric-count>0</span></button>
+                                    <button type="button" class="citation-metric-btn inline-flex items-center gap-1 rounded-full border border-slate-400 dark:border-slate-500 bg-slate-100 dark:bg-slate-700 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-600" data-metric-kind="nap" data-metric-value="unable_to_claim" aria-pressed="false">Unable to Claim <span class="citation-metric-count min-w-[20px] rounded-full bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 text-center" data-metric-count>0</span></button>
+                                </div>
+                            </section>
                         </div>
                     </div>
                 </div>
@@ -1061,16 +1079,16 @@ render_header('Location Manager');
                 <table id="citations_table" class="min-w-[1080px] table-fixed divide-y divide-slate-200 dark:divide-slate-700">
                     <thead class="bg-slate-50 dark:bg-slate-800">
                         <tr>
-                            <th class="w-[5%] px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"><input id="citations_select_all" type="checkbox" class="h-4 w-4 rounded border-slate-300 dark:border-slate-600 dark:bg-slate-700 text-brand-600"></th>
-                            <th class="w-[6%] px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">#</th>
+                            <th class="w-[5%] px-3 py-2 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"><input id="citations_select_all" type="checkbox" class="h-4 w-4 rounded border-slate-300 dark:border-slate-600 dark:bg-slate-700 text-brand-600"></th>
+                            <th class="w-[6%] px-3 py-2 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">#</th>
                             <th class="w-[24%] px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Directory</th>
-                            <th class="w-[14%] px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Citation Type</th>
-                            <th class="w-[12%] px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Status</th>
-                            <th class="w-[12%] px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Priority</th>
-                            <th class="w-[18%] px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">NAP Status</th>
-                            <th class="w-[12%] px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Assignee</th>
-                            <th class="w-[10%] px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Updated</th>
-                            <th class="w-[20%] px-3 py-2 text-right text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Action</th>
+                            <th class="w-[14%] px-3 py-2 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Citation Type</th>
+                            <th class="w-[12%] px-3 py-2 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Status</th>
+                            <th class="w-[12%] px-3 py-2 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Priority</th>
+                            <th class="w-[18%] px-3 py-2 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Live URL Status</th>
+                            <th class="w-[12%] px-3 py-2 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Assignee</th>
+                            <th class="w-[10%] px-3 py-2 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Updated</th>
+                            <th class="w-[20%] px-3 py-2 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Action</th>
                         </tr>
                     </thead>
                     <tbody id="citations_tbody" class="divide-y divide-slate-100 dark:divide-slate-700 bg-white dark:bg-slate-900">
@@ -1080,10 +1098,12 @@ render_header('Location Manager');
                                     'not_started' => 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
                                     'in_progress' => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
                                     'pending_submission' => 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+                                    'unable_to_submit' => 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200',
                                     'submitted' => 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
                                     'live' => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                                 ];
                                 $statusBadgeClass = $statusColors[$c['status']] ?? 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200';
+                                $statusBadgeLabel = status_label((string)($c['status'] ?? ''));
                                 $noteText = trim((string)($c['notes'] ?? ''));
                                 $assigneeFullName = trim((string)($c['assignee_name'] ?? ''));
                                 $assigneeImagePath = trim((string)($c['assignee_image_path'] ?? ''));
@@ -1097,9 +1117,17 @@ render_header('Location Manager');
                                 }
                                 $rowStatus = (string)($c['status'] ?? 'not_started');
                                 $rowNapStatus = $rowStatus === 'live' ? (string)($c['nap_status'] ?? 'correct') : '';
+                                $rowStatusHighlightMap = [
+                                    'not_started' => 'bg-slate-50/60 dark:bg-slate-800/40',
+                                    'in_progress' => 'bg-blue-50/60 dark:bg-blue-900/20',
+                                    'pending_submission' => 'bg-orange-50/60 dark:bg-orange-900/20',
+                                    'unable_to_submit' => 'bg-rose-50/60 dark:bg-rose-900/20',
+                                    'live' => 'bg-emerald-50/60 dark:bg-emerald-900/20',
+                                ];
+                                $rowHighlightClass = $rowStatusHighlightMap[$rowStatus] ?? 'bg-slate-50/60 dark:bg-slate-800/40';
                             ?>
                             <tr
-                                class="align-middle hover:bg-slate-50 dark:hover:bg-slate-800"
+                                class="align-middle <?php echo e($rowHighlightClass); ?> hover:bg-slate-100 dark:hover:bg-slate-700/70"
                                 data-citation-id="<?php echo e((string)$c['id']); ?>"
                                 data-directory="<?php echo e((string)$c['directory_name']); ?>"
                                 data-directory-website="<?php echo e((string)($c['directory_website'] ?? '')); ?>"
@@ -1114,8 +1142,8 @@ render_header('Location Manager');
                                 data-updated="<?php echo e((string)($c['updated_at'] ?? '')); ?>"
                                 data-notes="<?php echo e((string)$noteText); ?>"
                             >
-                                <td class="px-3 py-2.5 align-middle text-xs text-slate-500 dark:text-slate-400"><input type="checkbox" class="citation-bulk-checkbox h-4 w-4 rounded border-slate-300 dark:border-slate-600 dark:bg-slate-700 text-brand-600" name="citation_ids[]" value="<?php echo e((string)$c['id']); ?>" form="bulk_assign_form"></td>
-                                <td class="px-3 py-2.5 text-xs font-semibold text-slate-500 dark:text-slate-400"><?php echo e((string)((int)$idx + 1)); ?></td>
+                                <td class="px-3 py-2.5 align-middle text-center text-xs text-slate-500 dark:text-slate-400"><input type="checkbox" class="citation-bulk-checkbox h-4 w-4 rounded border-slate-300 dark:border-slate-600 dark:bg-slate-700 text-brand-600" name="citation_ids[]" value="<?php echo e((string)$c['id']); ?>" form="bulk_assign_form"></td>
+                                <td class="px-3 py-2.5 text-center text-xs font-semibold text-slate-500 dark:text-slate-400"><?php echo e((string)((int)$idx + 1)); ?></td>
                                 <td class="px-3 py-2.5 text-sm font-semibold text-slate-900 dark:text-white">
                                     <div class="flex items-center gap-1.5">
                                         <?php if (trim((string)($c['directory_logo_path'] ?? '')) !== ''): ?>
@@ -1124,33 +1152,37 @@ render_header('Location Manager');
                                         <span class="truncate"><?php echo e($c['directory_name']); ?></span>
                                     </div>
                                 </td>
-                                <td class="px-3 py-2.5 text-xs text-slate-600 dark:text-slate-300"><?php echo e((string)$c['citation_type']); ?></td>
-                                <td class="px-3 py-2.5"><span class="inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold <?php echo e($statusBadgeClass); ?>"><?php echo e(status_label((string)$c['status'])); ?></span></td>
-                                <td class="px-3 py-2.5 text-xs text-slate-600 dark:text-slate-300"><?php echo e(status_label((string)($c['priority_level'] ?? 'medium'))); ?></td>
-                                <td class="px-3 py-2.5 text-xs text-slate-600 dark:text-slate-300">
+                                <td class="px-3 py-2.5 text-center text-xs text-slate-600 dark:text-slate-300"><?php echo e((string)$c['citation_type']); ?></td>
+                                <td class="px-3 py-2.5 text-center"><span class="inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold <?php echo e($statusBadgeClass); ?>"><?php echo e($statusBadgeLabel); ?></span></td>
+                                <td class="px-3 py-2.5 text-center text-xs text-slate-600 dark:text-slate-300"><?php echo e(status_label((string)($c['priority_level'] ?? 'medium'))); ?></td>
+                                <td class="px-3 py-2.5 text-center text-xs text-slate-600 dark:text-slate-300">
                                     <?php if (($c['status'] ?? '') !== 'live'): ?>
                                         <span class="text-slate-400 dark:text-slate-600">-</span>
                                     <?php else: ?>
                                         <?php if (($c['nap_status'] ?? 'correct') === 'nap_error'): ?>
                                             <span class="inline-block rounded-full bg-rose-100 dark:bg-rose-900 px-2 py-0.5 text-[11px] font-semibold text-rose-800 dark:text-rose-200">NAP Error</span>
+                                        <?php elseif (($c['nap_status'] ?? 'correct') === 'pending_update_edit_request'): ?>
+                                            <span class="inline-block rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:text-amber-100">Pending Update/Edit Request</span>
+                                        <?php elseif (($c['nap_status'] ?? 'correct') === 'unable_to_claim'): ?>
+                                            <span class="inline-block rounded-full bg-slate-200 dark:bg-slate-700 px-2 py-0.5 text-[11px] font-semibold text-slate-700 dark:text-slate-100">Unable to Claim</span>
                                         <?php else: ?>
                                             <span class="inline-block rounded-full bg-emerald-100 dark:bg-emerald-900 px-2 py-0.5 text-[11px] font-semibold text-emerald-800 dark:text-emerald-200">Correct</span>
                                         <?php endif; ?>
                                     <?php endif; ?>
                                 </td>
-                                <td class="px-3 py-2.5 text-xs text-slate-600 dark:text-slate-300">
+                                <td class="px-3 py-2.5 text-center text-xs text-slate-600 dark:text-slate-300">
                                     <?php if ($assigneeFullName === ''): ?>
                                         <?php echo e($assigneeFirstName); ?>
                                     <?php elseif ($assigneeImagePath !== ''): ?>
                                         <img
-                                            class="h-8 w-8 rounded-full border border-slate-200 object-cover"
+                                            class="mx-auto h-8 w-8 rounded-full border border-slate-200 object-cover"
                                             src="<?php echo e($assigneeImagePath); ?>"
                                             alt="<?php echo e($assigneeFullName); ?>"
                                             title="<?php echo e($assigneeFullName); ?>"
                                         >
                                     <?php else: ?>
                                         <div
-                                            class="flex h-8 w-8 items-center justify-center rounded-full bg-brand-500 text-[11px] font-bold text-white"
+                                            class="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-brand-500 text-[11px] font-bold text-white"
                                             title="<?php echo e($assigneeFullName); ?>"
                                             aria-label="<?php echo e($assigneeFullName); ?>"
                                         >
@@ -1158,9 +1190,9 @@ render_header('Location Manager');
                                         </div>
                                     <?php endif; ?>
                                 </td>
-                                <td class="px-3 py-2.5 text-xs text-slate-500 dark:text-slate-400"><?php echo e((string)$c['updated_at']); ?></td>
-                                <td class="px-3 py-2.5 text-right overflow-visible">
-                                    <div class="relative flex items-center justify-end gap-1.5">
+                                <td class="px-3 py-2.5 text-center text-xs text-slate-500 dark:text-slate-400"><?php echo e((string)$c['updated_at']); ?></td>
+                                <td class="px-3 py-2.5 text-center overflow-visible">
+                                    <div class="relative flex items-center justify-center gap-1.5">
                                         <?php if ((string)($c['status'] ?? '') === 'live' && trim((string)($c['submitted_url'] ?? '')) !== ''): ?>
                                             <a
                                                 class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 transition hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
@@ -1426,10 +1458,12 @@ render_header('Location Manager');
                 </div>
 
                 <div id="edit_nap_status_row">
-                    <label class="mb-1 block text-xs font-semibold text-slate-600">NAP Status</label>
+                    <label class="mb-1 block text-xs font-semibold text-slate-600">Live URL Status</label>
                     <select id="edit_nap_status" class="w-full rounded-lg border border-slate-300 px-2 py-2 text-sm" name="nap_status">
                         <option value="correct">Correct</option>
                         <option value="nap_error">NAP Error</option>
+                        <option value="pending_update_edit_request">Pending Update/Edit Request</option>
+                        <option value="unable_to_claim">Unable to Claim</option>
                     </select>
                 </div>
 
@@ -1468,9 +1502,9 @@ render_header('Location Manager');
     </div>
 </div>
 
-<div id="note_popover" class="pointer-events-none fixed z-50 hidden w-80 max-w-[calc(100vw-1rem)] rounded-xl border border-slate-200 bg-white p-3 shadow-xl opacity-0 scale-95 transition duration-150 ease-out">
-    <p class="mb-1 text-xs font-bold uppercase tracking-wide text-slate-500">Notes</p>
-    <p id="note_popover_content" class="max-h-56 overflow-auto whitespace-pre-wrap break-words text-sm text-slate-700"></p>
+<div id="note_popover" class="pointer-events-none fixed z-50 hidden w-80 max-w-[calc(100vw-1rem)] rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 shadow-xl opacity-0 scale-95 transition duration-150 ease-out">
+    <p class="mb-1 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Notes</p>
+    <p id="note_popover_content" class="max-h-56 overflow-auto whitespace-pre-wrap break-words text-sm text-slate-700 dark:text-slate-200"></p>
 </div>
 
 <script>
@@ -1487,7 +1521,9 @@ render_header('Location Manager');
     const openCitationsModalBtn = document.getElementById('open_citations_modal');
     const closeCitationsModalBtn = document.getElementById('close_citations_modal');
     const citationsModalBackdrop = document.getElementById('citations_modal_backdrop');
-    const citationEditModal = document.getElementById('citation_edit_modal');
+    const toggleMetricsBtn = document.getElementById('toggle_metrics_btn');
+    const citationsMetricsContent = document.getElementById('citations_metrics_content');
+    const toggleMetricsIcon = document.getElementById('toggle_metrics_icon');
     const closeCitationEditModalBtn = document.getElementById('close_citation_edit_modal');
     const citationEditModalBackdrop = document.getElementById('citation_edit_modal_backdrop');
     const proofPreviewModal = document.getElementById('proof_preview_modal');
@@ -1672,6 +1708,50 @@ render_header('Location Manager');
     }
     if (citationsModalBackdrop) {
         citationsModalBackdrop.addEventListener('click', closeCitationsModal);
+    }
+
+    // Toggle metrics panel on mobile
+    if (toggleMetricsBtn && citationsMetricsContent) {
+        const mobileViewport = window.matchMedia('(max-width: 639px)');
+        let metricsVisible = true;
+        const updateMetricsToggle = () => {
+            const isMobile = mobileViewport.matches;
+
+            if (!isMobile) {
+                citationsMetricsContent.classList.remove('hidden');
+                toggleMetricsBtn.setAttribute('aria-expanded', 'true');
+                if (toggleMetricsIcon) {
+                    toggleMetricsIcon.textContent = '▲';
+                }
+                return;
+            }
+
+            if (metricsVisible) {
+                citationsMetricsContent.classList.remove('hidden');
+                toggleMetricsBtn.setAttribute('aria-expanded', 'true');
+                if (toggleMetricsIcon) {
+                    toggleMetricsIcon.textContent = '▲';
+                }
+            } else {
+                citationsMetricsContent.classList.add('hidden');
+                toggleMetricsBtn.setAttribute('aria-expanded', 'false');
+                if (toggleMetricsIcon) {
+                    toggleMetricsIcon.textContent = '▼';
+                }
+            }
+        };
+        toggleMetricsBtn.addEventListener('click', () => {
+            metricsVisible = !metricsVisible;
+            updateMetricsToggle();
+        });
+
+        if (typeof mobileViewport.addEventListener === 'function') {
+            mobileViewport.addEventListener('change', updateMetricsToggle);
+        } else if (typeof mobileViewport.addListener === 'function') {
+            mobileViewport.addListener(updateMetricsToggle);
+        }
+
+        updateMetricsToggle();
     }
 
     const openCitationsOnLoad = <?php echo $openCitationsOnLoad ? 'true' : 'false'; ?>;
@@ -1917,6 +1997,48 @@ render_header('Location Manager');
         notePopover.style.top = `${top}px`;
     };
 
+    const escapeHtml = (value) => {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    };
+
+    const linkifyNoteText = (value) => {
+        const source = String(value || '').replace(/\r\n?/g, '\n').trim();
+        if (source === '') {
+            return '—';
+        }
+
+        const pattern = /(https?:\/\/[^\s<>"]+|www\.[^\s<>"]+|[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,})/gi;
+        const parts = source.split(pattern);
+        let html = '';
+
+        parts.forEach((part) => {
+            if (!part) {
+                return;
+            }
+
+            if (/^[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}$/i.test(part)) {
+                const safeEmail = escapeHtml(part);
+                html += `<a class="text-sky-600 dark:text-sky-300 hover:underline break-all" href="mailto:${safeEmail}">${safeEmail}</a>`;
+                return;
+            }
+
+            if (/^(https?:\/\/|www\.)/i.test(part)) {
+                const href = /^www\./i.test(part) ? `https://${part}` : part;
+                html += `<a class="text-sky-600 dark:text-sky-300 hover:underline break-all" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(part)}</a>`;
+                return;
+            }
+
+            html += escapeHtml(part).replace(/\n/g, '<br>');
+        });
+
+        return html;
+    };
+
     const showNotePopover = (trigger) => {
         if (!notePopover || !notePopoverContent) {
             return;
@@ -1924,7 +2046,7 @@ render_header('Location Manager');
 
         window.clearTimeout(hideTimer);
         const note = trigger.getAttribute('data-note') || '';
-        notePopoverContent.textContent = note;
+        notePopoverContent.innerHTML = linkifyNoteText(note);
 
         if (activeTrigger && activeTrigger !== trigger) {
             activeTrigger.setAttribute('aria-expanded', 'false');
@@ -2030,6 +2152,7 @@ render_header('Location Manager');
 
     const citationsTypeFilter = document.getElementById('citations_type_filter');
     const citationsSearch = document.getElementById('citations_search');
+    const citationsSortBtn = document.getElementById('citations_sort_btn');
     const citationsExport = document.getElementById('citations_export');
     const citationMetricButtons = Array.from(document.querySelectorAll('.citation-metric-btn'));
     const citationsTbody = document.getElementById('citations_tbody');
@@ -2046,8 +2169,37 @@ render_header('Location Manager');
         not_started: 'bg-gray-100 text-gray-800',
         in_progress: 'bg-blue-100 text-blue-800',
         pending_submission: 'bg-orange-100 text-orange-800',
+        unable_to_submit: 'bg-rose-100 text-rose-800',
         submitted: 'bg-purple-100 text-purple-800',
         live: 'bg-green-100 text-green-800'
+    };
+
+    const sortModes = [
+        { key: 'updated_desc', label: 'Sort: Newest' },
+        { key: 'updated_asc', label: 'Sort: Oldest' },
+        { key: 'directory_asc', label: 'Sort: Directory A-Z' },
+        { key: 'directory_desc', label: 'Sort: Directory Z-A' }
+    ];
+    let activeSortModeIndex = 0;
+
+    const rowStatusClassMap = {
+        not_started: 'bg-slate-50/60 dark:bg-slate-800/40',
+        in_progress: 'bg-blue-50/60 dark:bg-blue-900/20',
+        pending_submission: 'bg-orange-50/60 dark:bg-orange-900/20',
+        unable_to_submit: 'bg-rose-50/60 dark:bg-rose-900/20',
+        live: 'bg-emerald-50/60 dark:bg-emerald-900/20'
+    };
+    const rowStatusClassTokens = Object.values(rowStatusClassMap)
+        .flatMap((classGroup) => classGroup.split(' '));
+
+    const applyRowStatusClass = (row, status) => {
+        if (!row) {
+            return;
+        }
+
+        row.classList.remove(...rowStatusClassTokens);
+        const classGroup = rowStatusClassMap[status] || rowStatusClassMap.not_started;
+        classGroup.split(' ').forEach((className) => row.classList.add(className));
     };
 
     const getBulkCheckboxes = () => Array.from(document.querySelectorAll('.citation-bulk-checkbox'));
@@ -2108,12 +2260,62 @@ render_header('Location Manager');
             .replace(/\b\w/g, (char) => char.toUpperCase());
     };
 
+    const normalizeTimestamp = (value) => {
+        const timestamp = Date.parse(String(value || '').trim());
+        return Number.isNaN(timestamp) ? 0 : timestamp;
+    };
+
+    const renumberCitationRows = () => {
+        getCitationRows().forEach((row, index) => {
+            const indexCell = row.querySelector('td:nth-child(2)');
+            if (indexCell) {
+                indexCell.textContent = String(index + 1);
+            }
+        });
+    };
+
+    const applyCitationSort = () => {
+        if (!citationsTbody) {
+            return;
+        }
+
+        const rows = getCitationRows();
+        if (!rows.length) {
+            return;
+        }
+
+        const activeSortMode = sortModes[activeSortModeIndex] || sortModes[0];
+
+        rows.sort((a, b) => {
+            const aDirectory = String(a.getAttribute('data-directory') || '').toLowerCase();
+            const bDirectory = String(b.getAttribute('data-directory') || '').toLowerCase();
+            const aUpdated = normalizeTimestamp(a.getAttribute('data-updated'));
+            const bUpdated = normalizeTimestamp(b.getAttribute('data-updated'));
+
+            if (activeSortMode.key === 'updated_asc') {
+                return aUpdated - bUpdated;
+            }
+            if (activeSortMode.key === 'directory_asc') {
+                return aDirectory.localeCompare(bDirectory);
+            }
+            if (activeSortMode.key === 'directory_desc') {
+                return bDirectory.localeCompare(aDirectory);
+            }
+
+            return bUpdated - aUpdated;
+        });
+
+        rows.forEach((row) => citationsTbody.appendChild(row));
+        renumberCitationRows();
+    };
+
     const applyStatusToRow = (row, status) => {
         if (!row) {
             return;
         }
 
         row.setAttribute('data-status', status);
+        applyRowStatusClass(row, status);
         if (status !== 'live') {
             row.setAttribute('data-nap-status', '');
         }
@@ -2135,11 +2337,14 @@ render_header('Location Manager');
             not_started: 0,
             in_progress: 0,
             pending_submission: 0,
+            unable_to_submit: 0,
             live: 0
         };
         const napCounts = {
             correct: 0,
-            nap_error: 0
+            nap_error: 0,
+            pending_update_edit_request: 0,
+            unable_to_claim: 0
         };
 
         rows.forEach((row) => {
@@ -2311,6 +2516,15 @@ render_header('Location Manager');
     if (citationsExport) {
         citationsExport.addEventListener('click', exportFilteredCitations);
     }
+    if (citationsSortBtn) {
+        citationsSortBtn.addEventListener('click', () => {
+            activeSortModeIndex = (activeSortModeIndex + 1) % sortModes.length;
+            const activeSortMode = sortModes[activeSortModeIndex] || sortModes[0];
+            citationsSortBtn.textContent = activeSortMode.label;
+            applyCitationSort();
+            applyCitationFilters();
+        });
+    }
 
     citationMetricButtons.forEach((button) => {
         button.addEventListener('click', () => {
@@ -2409,6 +2623,12 @@ render_header('Location Manager');
         });
     });
 
+    getCitationRows().forEach((row) => {
+        const status = String(row.getAttribute('data-status') || 'not_started').trim();
+        applyRowStatusClass(row, status);
+    });
+
+    applyCitationSort();
     updateCitationMetrics();
     applyCitationFilters();
     syncBulkDeleteFields();
