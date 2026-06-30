@@ -68,6 +68,29 @@ function table_has_column(string $table, string $column): bool
     }
 }
 
+function table_column_varchar_length(string $table, string $column): ?int
+{
+    try {
+        $sql = 'SELECT CHARACTER_MAXIMUM_LENGTH
+                FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE()
+                  AND TABLE_NAME = ?
+                  AND COLUMN_NAME = ?
+                  AND DATA_TYPE = "varchar"
+                LIMIT 1';
+        $stmt = db()->prepare($sql);
+        $stmt->execute([$table, $column]);
+        $value = $stmt->fetchColumn();
+        if ($value === false || $value === null) {
+            return null;
+        }
+
+        return (int)$value;
+    } catch (Throwable $e) {
+        return null;
+    }
+}
+
 function table_exists(string $table): bool
 {
     try {
@@ -456,6 +479,13 @@ function ensure_runtime_schema(): void
         }
     }
 
+    if (table_has_column('listing_tasks', 'submitted_url')) {
+        $submittedUrlLength = table_column_varchar_length('listing_tasks', 'submitted_url');
+        if ($submittedUrlLength !== null && $submittedUrlLength < 2048) {
+            db()->exec('ALTER TABLE listing_tasks MODIFY COLUMN submitted_url VARCHAR(2048) DEFAULT ""');
+        }
+    }
+
     try {
         db()->exec("ALTER TABLE listing_tasks MODIFY COLUMN status ENUM('not_started','in_progress','pending_submission','unable_to_submit','live','submitted','rejected','needs_edit') NOT NULL DEFAULT 'not_started'");
     } catch (Throwable $e) {
@@ -480,6 +510,13 @@ function ensure_runtime_schema(): void
         foreach ($directoryColumns as $column => $sql) {
             if (!table_has_column('directories', $column)) {
                 db()->exec($sql);
+            }
+        }
+
+        if (table_has_column('directories', 'submission_url')) {
+            $submissionUrlLength = table_column_varchar_length('directories', 'submission_url');
+            if ($submissionUrlLength !== null && $submissionUrlLength < 2048) {
+                db()->exec('ALTER TABLE directories MODIFY COLUMN submission_url VARCHAR(2048) DEFAULT ""');
             }
         }
 
