@@ -491,7 +491,7 @@ function render_header(string $title): void
     $helpDismissedAt = trim((string)($user['guide_dismissed_at'] ?? $client['guide_dismissed_at'] ?? ''));
     $helpShouldAutoShow = $helpTutorial !== null && ($user !== null || $client !== null) && $helpSeenAt === '' && $helpDismissedAt === '';
     $isAdminUser = $user ? is_admin() : false;
-    $notificationPreviewRows = $user && !$isAdminUser ? recent_notifications($user, 0) : [];
+    $notificationPreviewRows = $user ? recent_notifications($user, 0) : [];
     $notificationReturnUrl = (string)($_SERVER['REQUEST_URI'] ?? ($base . '/dashboard.php'));
 
     if ($user) {
@@ -512,15 +512,15 @@ function render_header(string $title): void
     echo '<link rel="preconnect" href="https://fonts.googleapis.com">';
     echo '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>';
     echo '<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">';
-    echo '<script>tailwind.config={darkMode:"class",theme:{extend:{fontFamily:{sans:["Manrope","ui-sans-serif","sans-serif"]},colors:{brand:{50:"rgb(var(--brand-50) / <alpha-value>)",100:"rgb(var(--brand-100) / <alpha-value>)",500:"rgb(var(--brand-500) / <alpha-value>)",600:"rgb(var(--brand-600) / <alpha-value>)",700:"rgb(var(--brand-700) / <alpha-value>)"}}}}};</script>';
+    echo '<script>tailwind.config={darkMode:"class",theme:{extend:{fontFamily:{sans:["Manrope","ui-sans-serif","sans-serif"]},colors:{brand:{50:"rgb(var(--brand-50) / <alpha-value>)",100:"rgb(var(--brand-100) / <alpha-value>)",200:"rgb(var(--brand-200) / <alpha-value>)",300:"rgb(var(--brand-300) / <alpha-value>)",400:"rgb(var(--brand-400) / <alpha-value>)",500:"rgb(var(--brand-500) / <alpha-value>)",600:"rgb(var(--brand-600) / <alpha-value>)",700:"rgb(var(--brand-700) / <alpha-value>)",800:"rgb(var(--brand-800) / <alpha-value>)",900:"rgb(var(--brand-900) / <alpha-value>)",950:"rgb(var(--brand-950) / <alpha-value>)"}}}}};</script>';
     echo '<style>
-:root{--brand-50:238 242 255;--brand-100:224 231 255;--brand-500:99 102 241;--brand-600:79 70 229;--brand-700:67 56 202;}
-body.theme-emerald,html.theme-emerald{--brand-50:236 253 245;--brand-100:209 250 229;--brand-500:16 185 129;--brand-600:5 150 105;--brand-700:4 120 87;}
-body.theme-rose,html.theme-rose{--brand-50:255 241 242;--brand-100:255 228 230;--brand-500:244 63 94;--brand-600:225 29 72;--brand-700:190 18 60;}
-body.theme-indigo,html.theme-indigo{--brand-50:238 242 255;--brand-100:224 231 255;--brand-500:99 102 241;--brand-600:79 70 229;--brand-700:67 56 202;}
-body.theme-cyan,html.theme-cyan{--brand-50:236 254 255;--brand-100:207 250 254;--brand-500:6 182 212;--brand-600:8 145 178;--brand-700:14 116 144;}
-body.theme-amber,html.theme-amber{--brand-50:255 251 235;--brand-100:254 243 199;--brand-500:245 158 11;--brand-600:217 119 6;--brand-700:180 83 9;}
-body.theme-slate,html.theme-slate{--brand-50:248 250 252;--brand-100:241 245 249;--brand-500:100 116 139;--brand-600:71 85 105;--brand-700:51 65 85;}
+:root{--brand-50:238 242 255;--brand-100:224 231 255;--brand-200:199 210 254;--brand-300:165 180 252;--brand-400:129 140 248;--brand-500:99 102 241;--brand-600:79 70 229;--brand-700:67 56 202;--brand-800:55 48 163;--brand-900:49 46 129;--brand-950:30 27 75;}
+body.theme-emerald,html.theme-emerald{--brand-50:236 253 245;--brand-100:209 250 229;--brand-200:167 243 208;--brand-300:110 231 183;--brand-400:52 211 153;--brand-500:16 185 129;--brand-600:5 150 105;--brand-700:4 120 87;--brand-800:6 95 70;--brand-900:6 78 59;--brand-950:2 44 34;}
+body.theme-rose,html.theme-rose{--brand-50:255 241 242;--brand-100:255 228 230;--brand-200:254 205 211;--brand-300:253 164 175;--brand-400:251 113 133;--brand-500:244 63 94;--brand-600:225 29 72;--brand-700:190 18 60;--brand-800:159 18 57;--brand-900:136 19 55;--brand-950:76 5 25;}
+body.theme-indigo,html.theme-indigo{--brand-50:238 242 255;--brand-100:224 231 255;--brand-200:199 210 254;--brand-300:165 180 252;--brand-400:129 140 248;--brand-500:99 102 241;--brand-600:79 70 229;--brand-700:67 56 202;--brand-800:55 48 163;--brand-900:49 46 129;--brand-950:30 27 75;}
+body.theme-cyan,html.theme-cyan{--brand-50:236 254 255;--brand-100:207 250 254;--brand-200:165 243 252;--brand-300:103 232 249;--brand-400:34 211 238;--brand-500:6 182 212;--brand-600:8 145 178;--brand-700:14 116 144;--brand-800:21 94 117;--brand-900:22 78 99;--brand-950:8 51 68;}
+body.theme-amber,html.theme-amber{--brand-50:255 251 235;--brand-100:254 243 199;--brand-200:253 230 138;--brand-300:252 211 77;--brand-400:251 191 36;--brand-500:245 158 11;--brand-600:217 119 6;--brand-700:180 83 9;--brand-800:146 64 14;--brand-900:120 53 15;--brand-950:69 26 3;}
+body.theme-slate,html.theme-slate{--brand-50:248 250 252;--brand-100:241 245 249;--brand-200:226 232 240;--brand-300:203 213 225;--brand-400:148 163 184;--brand-500:100 116 139;--brand-600:71 85 105;--brand-700:51 65 85;--brand-800:30 41 59;--brand-900:15 23 42;--brand-950:2 6 23;}
 body{background-color:var(--cf-bg-light);background-image:var(--cf-bg-grad-light);color:#1e293b;}
 body.dark{background-color:var(--cf-bg-dark);background-image:var(--cf-bg-grad-dark);color:#e2e8f0;}
 html.dark body{background-color:var(--cf-bg-dark);background-image:var(--cf-bg-grad-dark);color:#e2e8f0;}
@@ -534,8 +534,8 @@ html.dark .text-slate-600,html.dark .text-slate-500{color:#94a3b8 !important;}
 html.dark input,html.dark select,html.dark textarea{background-color:#0b1220 !important;color:#e2e8f0 !important;border-color:#334155 !important;}
 html.dark .hover\:bg-slate-50:hover{background-color:#1e293b !important;}
 html.dark .hover\:bg-slate-100:hover{background-color:#1e293b !important;}
-html.dark .bg-slate-900{background-color:rgb(var(--brand-600)) !important;}
-html.dark .hover\:bg-slate-950:hover{background-color:rgb(var(--brand-700)) !important;}
+html.dark .bg-slate-100{background-color:#1e293b !important;}
+html.dark .divide-slate-100>:not([hidden])~:not([hidden]),html.dark .divide-slate-200>:not([hidden])~:not([hidden]){border-color:#1e293b !important;}
 body.sidebar-compact #app_sidebar{width:5.5rem;}
 body.sidebar-compact #app_content_wrap{padding-left:5.5rem;}
 body.sidebar-compact .sidebar-label,body.sidebar-compact .sidebar-subtitle,body.sidebar-compact .sidebar-user{display:none;}
@@ -678,7 +678,7 @@ button.is-submitting,input.is-submitting{pointer-events:none;opacity:.92;}
         echo '<form method="get" action="' . e($base) . '/global_search.php" class="hidden items-center gap-2 lg:flex">';
         echo '<label for="global_quick_search" class="sr-only">Global Search</label>';
         echo '<input id="global_quick_search" name="q" type="search" placeholder="Search businesses, citations, directories..." class="w-[26rem] rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">';
-        echo '<button type="submit" class="rounded-lg bg-brand-600 px-3 py-2 text-xs font-semibold text-white hover:bg-brand-700">Search</button>';
+        echo '<button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-2 text-xs font-semibold text-white hover:bg-brand-700"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>Search</button>';
         echo '</form>';
         echo '<div class="flex items-center gap-2">';
         if ($helpTutorial !== null) {
@@ -687,13 +687,7 @@ button.is-submitting,input.is-submitting{pointer-events:none;opacity:.92;}
             echo '<span class="hidden sm:inline">Help</span>';
             echo '</button>';
         }
-        if ($isAdminUser) {
-            echo '<a class="relative inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800" href="' . e($base) . '/notifications.php" aria-label="Notifications">' . $notificationIcon;
-            if ($notificationCount > 0) {
-                echo '<span class="absolute -right-0.5 -top-0.5 inline-flex min-w-[1.2rem] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">' . e((string)$notificationCount) . '</span>';
-            }
-            echo '</a>';
-        } else {
+        {
             echo '<div id="notification_menu_wrap" class="relative">';
             echo '<button id="notification_menu_button" type="button" class="relative inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800" aria-haspopup="true" aria-expanded="false" aria-label="Notifications">' . $notificationIcon;
             if ($notificationCount > 0) {
@@ -703,7 +697,7 @@ button.is-submitting,input.is-submitting{pointer-events:none;opacity:.92;}
             echo '<div id="notification_menu_panel" class="fixed left-2 right-2 top-[4.5rem] z-40 hidden max-h-[calc(100dvh-5.5rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl dark:border-slate-700 dark:bg-slate-900 sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-[24rem] sm:max-w-[calc(100vw-2rem)] sm:max-h-none">';
             echo '<div class="mb-3 flex items-center justify-between gap-2">';
             echo '<div><p class="text-sm font-bold text-slate-900 dark:text-slate-100">Latest Notifications</p><p class="text-xs text-slate-500 dark:text-slate-400">Showing all recent items</p></div>';
-            echo '<a class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800" href="' . e($base) . '/notifications.php?read_all=1&from=' . rawurlencode($notificationReturnUrl) . '">Mark all read</a>';
+            echo '<a class="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800" href="' . e($base) . '/notifications.php?read_all=1&from=' . rawurlencode($notificationReturnUrl) . '"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 11 7 15.5l9-11"/><path d="M9 11l4.5 4.5 9-11"/></svg>Mark all read</a>';
             echo '</div>';
             echo '<div class="max-h-[calc(100dvh-12rem)] space-y-2 overflow-y-auto sm:max-h-[26rem]">';
             foreach ($notificationPreviewRows as $row) {
@@ -774,15 +768,15 @@ button.is-submitting,input.is-submitting{pointer-events:none;opacity:.92;}
         echo '<p class="truncate text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">' . e(!empty($user['designation']) ? $user['designation'] : role_label($user)) . '</p>';
         echo '</div>';
         echo '<button id="theme_mode_toggle" type="button" class="mb-2 inline-flex w-full items-center justify-between rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800" aria-label="Toggle dark mode" title="Toggle dark mode">';
-        echo '<span>Dark Mode</span>';
-        echo '<span class="inline-flex items-center">';
+        echo '<span class="text-slate-700 dark:text-slate-200">Dark Mode</span>';
+        echo '<span class="inline-flex items-center text-slate-700 dark:text-slate-200">';
         echo '<svg id="theme_mode_icon_sun" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M6.34 17.66l-1.41 1.41"/><path d="M19.07 4.93l-1.41 1.41"/></svg>';
         echo '<svg id="theme_mode_icon_moon" xmlns="http://www.w3.org/2000/svg" class="hidden h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3c0 .36.02.72.07 1.08A7 7 0 0 0 19.92 12c.36.05.72.07 1.08.07z"/></svg>';
         echo '</span>';
         echo '</button>';
-        echo '<button id="open_theme_settings" type="button" class="mb-2 inline-flex w-full items-center justify-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">Theme Settings</button>';
-        echo '<button id="toggle_compact_sidebar" type="button" class="mb-2 inline-flex w-full items-center justify-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">Compact Sidebar</button>';
-        echo '<a class="inline-flex w-full items-center justify-center rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-950 dark:bg-slate-700 dark:hover:bg-slate-600" href="' . e($base) . '/logout.php">Logout</a>';
+        echo '<button id="open_theme_settings" type="button" class="mb-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-slate-700 dark:text-slate-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13.5" cy="6.5" r="1.3"/><circle cx="17.5" cy="10.5" r="1.3"/><circle cx="8.5" cy="7.5" r="1.3"/><circle cx="6.5" cy="12.5" r="1.3"/><path d="M12 21a9 9 0 1 1 0-18c1 0 1.8.8 1.8 1.8 0 .5-.2 1-.5 1.3-.3.3-.5.8-.5 1.3 0 1 .8 1.8 1.8 1.8H17a4 4 0 0 1 4 4 7 7 0 0 1-9 7.6"/></svg><span class="text-slate-700 dark:text-slate-200">Theme Settings</span></button>';
+        echo '<button id="toggle_compact_sidebar" type="button" class="mb-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-slate-700 dark:text-slate-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg><span class="text-slate-700 dark:text-slate-200">Compact Sidebar</span></button>';
+        echo '<a class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-slate-700 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600" href="' . e($base) . '/logout.php"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>Logout</a>';
         echo '</div>';
         echo '</div>';
         echo '</div>';
@@ -820,7 +814,7 @@ button.is-submitting,input.is-submitting{pointer-events:none;opacity:.92;}
         echo '<div class="ml-auto flex gap-2">';
         echo '<button id="tour_prev_btn" type="button" class="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200 disabled:opacity-40">&#8592; Prev</button>';
         echo '<button id="tour_next_btn" type="button" class="inline-flex items-center gap-1 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700">Next &#8594;</button>';
-        echo '<button id="end_tour_btn" type="button" class="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300">Exit Tour</button>';
+        echo '<button id="end_tour_btn" type="button" class="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>Exit Tour</button>';
         echo '</div>';
         echo '</div>';
         echo '<div class="grid gap-6 overflow-y-auto flex-1 px-6 py-5 md:grid-cols-[1.15fr_0.85fr]">';
@@ -878,7 +872,7 @@ button.is-submitting,input.is-submitting{pointer-events:none;opacity:.92;}
 
     if ($flash) {
         $flashType = (string)($flash['type'] ?? 'err');
-        $classes = 'mb-4 rounded-xl border px-4 py-3 text-sm font-medium';
+        $classes = 'mb-4 flex items-start justify-between gap-3 rounded-xl border px-4 py-3 text-sm font-medium';
         if ($flashType === 'ok') {
             $classes .= ' border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-200';
         } elseif ($flashType === 'warning' || $flashType === 'warn') {
@@ -888,7 +882,7 @@ button.is-submitting,input.is-submitting{pointer-events:none;opacity:.92;}
         } else {
             $classes .= ' border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-400/30 dark:bg-rose-500/10 dark:text-rose-200';
         }
-        echo '<div class="' . e($classes) . '">' . e($flash['message']) . '</div>';
+        echo '<div class="' . e($classes) . '"><span class="flex-1">' . e($flash['message']) . '</span><button type="button" onclick="this.parentElement.remove()" aria-label="Dismiss message" class="-m-1 shrink-0 rounded-md p-1 text-current opacity-60 transition hover:bg-black/5 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-current/40 dark:hover:bg-white/10"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg></button></div>';
     }
 
     if ($helpTutorial !== null) {
@@ -900,8 +894,8 @@ button.is-submitting,input.is-submitting{pointer-events:none;opacity:.92;}
         echo '<p class="mt-1 text-sm text-slate-600 dark:text-slate-300">' . e((string)$helpTutorial['summary']) . '</p>';
         echo '</div>';
         echo '<div class="flex flex-wrap gap-2">';
-        echo '<button id="open_help_tutorial_inline" type="button" class="inline-flex items-center justify-center rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">Open Guide</button>';
-        echo '<button id="dismiss_page_help_hint" type="button" class="inline-flex items-center justify-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">Dismiss</button>';
+        echo '<button id="open_help_tutorial_inline" type="button" class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>Open Guide</button>';
+        echo '<button id="dismiss_page_help_hint" type="button" class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>Dismiss</button>';
         echo '</div>';
         echo '</div>';
         echo '</section>';
@@ -910,22 +904,24 @@ button.is-submitting,input.is-submitting{pointer-events:none;opacity:.92;}
 
 function render_footer(): void
 {
+    if (current_user()) {
+        echo '<footer class="mt-8 border-t border-slate-200 py-4 text-center text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">CiteFlow Manager &copy; ' . e(date('Y')) . ' Marketing Done Right. All rights reserved.</footer>';
+    }
     echo '</main>';
     if (current_user()) {
                 echo '<div id="theme_settings_panel" class="fixed right-4 top-20 z-50 hidden w-72 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl dark:border-slate-700 dark:bg-slate-900">';
                 echo '<p class="text-sm font-bold text-slate-900 dark:text-slate-100">Theme Settings</p>';
                 echo '<p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Accent Color</p>';
                 echo '<div class="mt-3 grid grid-cols-3 gap-2">';
-                echo '<button class="accent-btn rounded-lg border border-slate-300 px-2 py-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200" data-accent="indigo">Indigo</button>';
-                echo '<button class="accent-btn rounded-lg border border-slate-300 px-2 py-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200" data-accent="emerald">Emerald</button>';
-                echo '<button class="accent-btn rounded-lg border border-slate-300 px-2 py-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200" data-accent="rose">Rose</button>';
-                echo '<button class="accent-btn rounded-lg border border-slate-300 px-2 py-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200" data-accent="cyan">Cyan</button>';
-                echo '<button class="accent-btn rounded-lg border border-slate-300 px-2 py-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200" data-accent="amber">Amber</button>';
-                echo '<button class="accent-btn rounded-lg border border-slate-300 px-2 py-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200" data-accent="slate">Slate</button>';
+                echo '<button class="accent-btn inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2 py-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200" data-accent="indigo"><span class="h-3 w-3 shrink-0 rounded-full" style="background-color:#4F46E5"></span>Indigo</button>';
+                echo '<button class="accent-btn inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2 py-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200" data-accent="emerald"><span class="h-3 w-3 shrink-0 rounded-full" style="background-color:#059669"></span>Emerald</button>';
+                echo '<button class="accent-btn inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2 py-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200" data-accent="rose"><span class="h-3 w-3 shrink-0 rounded-full" style="background-color:#E11D48"></span>Rose</button>';
+                echo '<button class="accent-btn inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2 py-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200" data-accent="cyan"><span class="h-3 w-3 shrink-0 rounded-full" style="background-color:#0891B2"></span>Cyan</button>';
+                echo '<button class="accent-btn inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2 py-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200" data-accent="amber"><span class="h-3 w-3 shrink-0 rounded-full" style="background-color:#D97706"></span>Amber</button>';
+                echo '<button class="accent-btn inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2 py-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200" data-accent="slate"><span class="h-3 w-3 shrink-0 rounded-full" style="background-color:#475569"></span>Slate</button>';
                 echo '</div>';
                 echo '</div>';
 
-                echo '<footer class="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">CiteFlow Manager</footer>';
                 $trackingBase = rtrim((string)app_config()['base_url'], '/');
                 $trackingUrl = $trackingBase . '/user_tracking.php';
                 echo '<script>window.citeflowTracking=' . json_encode([
@@ -1560,6 +1556,8 @@ function render_footer(): void
 })();
 </script>';
         echo '</div>';
+    } elseif (current_client()) {
+        echo '<footer class="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">CiteFlow Manager &copy; ' . e(date('Y')) . ' Marketing Done Right. All rights reserved.</footer>';
     }
     echo '</body></html>';
 }
