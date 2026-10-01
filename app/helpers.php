@@ -8,6 +8,17 @@ function app_config(): array
 
     if ($config === null) {
         $config = require __DIR__ . '/config.php';
+
+        // Optional, gitignored override for environment-specific values (DB
+        // credentials, base_url, etc.) so a `git pull` on a server never
+        // clobbers its live settings with whatever is committed in config.php.
+        $localConfigFile = __DIR__ . '/config.local.php';
+        if (is_file($localConfigFile)) {
+            $localConfig = require $localConfigFile;
+            if (is_array($localConfig)) {
+                $config = array_merge($config, $localConfig);
+            }
+        }
     }
 
     return $config;
@@ -370,107 +381,6 @@ function optimize_image_binary(string $bytes, int $maxUploadSize, ?string &$erro
     return null;
 }
 
-function extract_dominant_image_color(string $filePath): ?array
-{
-    if (!function_exists('imagecreatefromstring') || !is_file($filePath)) {
-        return null;
-    }
-
-    $bytes = @file_get_contents($filePath);
-    if ($bytes === false || $bytes === '') {
-        return null;
-    }
-
-    $source = @imagecreatefromstring($bytes);
-    if (!$source instanceof GdImage) {
-        return null;
-    }
-
-    $thumbSize = 24;
-    $thumb = imagecreatetruecolor($thumbSize, $thumbSize);
-    if (!$thumb instanceof GdImage) {
-        imagedestroy($source);
-        return null;
-    }
-
-    imagealphablending($thumb, false);
-    imagesavealpha($thumb, true);
-    $transparent = imagecolorallocatealpha($thumb, 0, 0, 0, 127);
-    imagefill($thumb, 0, 0, $transparent);
-
-    imagecopyresampled(
-        $thumb,
-        $source,
-        0,
-        0,
-        0,
-        0,
-        $thumbSize,
-        $thumbSize,
-        imagesx($source),
-        imagesy($source)
-    );
-    imagedestroy($source);
-
-    $totalRed = 0;
-    $totalGreen = 0;
-    $totalBlue = 0;
-    $counted = 0;
-
-    for ($y = 0; $y < $thumbSize; $y++) {
-        for ($x = 0; $x < $thumbSize; $x++) {
-            $rgba = imagecolorat($thumb, $x, $y);
-            $alpha = ($rgba >> 24) & 0x7F;
-            if ($alpha > 100) {
-                continue;
-            }
-
-            $red = ($rgba >> 16) & 0xFF;
-            $green = ($rgba >> 8) & 0xFF;
-            $blue = $rgba & 0xFF;
-
-            $isNearWhite = ($red > 235 && $green > 235 && $blue > 235);
-            $isNearBlack = ($red < 20 && $green < 20 && $blue < 20);
-            if ($isNearWhite || $isNearBlack) {
-                continue;
-            }
-
-            $totalRed += $red;
-            $totalGreen += $green;
-            $totalBlue += $blue;
-            $counted++;
-        }
-    }
-
-    imagedestroy($thumb);
-
-    if ($counted === 0) {
-        return null;
-    }
-
-    return [
-        (int)round($totalRed / $counted),
-        (int)round($totalGreen / $counted),
-        (int)round($totalBlue / $counted),
-    ];
-}
-
-function adjust_color_brightness(array $rgb, float $percent): array
-{
-    $adjusted = [];
-    foreach (array_slice($rgb, 0, 3) as $channel) {
-        $value = (int)$channel;
-        if ($percent >= 0) {
-            $value = (int)round($value + (255 - $value) * $percent);
-        } else {
-            $value = (int)round($value * (1 + $percent));
-        }
-        $adjusted[] = max(0, min(255, $value));
-    }
-
-    return $adjusted;
-}
-
 function save_image_binary_to_uploads(
     string $bytes,
     string $prefix,
@@ -578,6 +488,116 @@ function delete_uploaded_asset(string $relativePath): void
 
     // Defer cleanup until request shutdown so DB updates in this request are considered.
     schedule_uploaded_images_cleanup();
+}
+
+/**
+ * Average the non-background pixels of an image into a single RGB color,
+ * suitable for deriving a brand accent (e.g. a banner gradient) from a logo.
+ * Returns null if the image can't be read or no usable pixels are found.
+ *
+ * @return array{0:int,1:int,2:int}|null
+ */
+function extract_dominant_image_color(string $filePath): ?array
+{
+    if (!function_exists('imagecreatefromstring') || !is_file($filePath)) {
+        return null;
+    }
+
+    $bytes = @file_get_contents($filePath);
+    if ($bytes === false || $bytes === '') {
+        return null;
+    }
+
+    $image = @imagecreatefromstring($bytes);
+    if ($image === false) {
+        return null;
+    }
+
+    $width = imagesx($image);
+    $height = imagesy($image);
+    if ($width < 1 || $height < 1) {
+        imagedestroy($image);
+        return null;
+    }
+
+    $thumbSize = 24;
+    $thumb = imagecreatetruecolor($thumbSize, $thumbSize);
+    imagealphablending($thumb, false);
+    imagesavealpha($thumb, true);
+    $transparent = imagecolorallocatealpha($thumb, 0, 0, 0, 127);
+    imagefill($thumb, 0, 0, $transparent);
+    imagecopyresampled($thumb, $image, 0, 0, 0, 0, $thumbSize, $thumbSize, $width, $height);
+    imagedestroy($image);
+
+    $rTotal = 0;
+    $gTotal = 0;
+    $bTotal = 0;
+    $count = 0;
+
+    for ($y = 0; $y < $thumbSize; $y++) {
+        for ($x = 0; $x < $thumbSize; $x++) {
+            $rgba = imagecolorat($thumb, $x, $y);
+            $alpha = ($rgba >> 24) & 0x7F;
+            if ($alpha > 40) {
+                continue;
+            }
+
+            $r = ($rgba >> 16) & 0xFF;
+            $g = ($rgba >> 8) & 0xFF;
+            $b = $rgba & 0xFF;
+
+            $isNearWhite = $r > 235 && $g > 235 && $b > 235;
+            $isNearBlack = $r < 20 && $g < 20 && $b < 20;
+            if ($isNearWhite || $isNearBlack) {
+                continue;
+            }
+
+            $rTotal += $r;
+            $gTotal += $g;
+            $bTotal += $b;
+            $count++;
+        }
+    }
+
+    imagedestroy($thumb);
+
+    if ($count < 5) {
+        return null;
+    }
+
+    return [
+        (int)round($rTotal / $count),
+        (int)round($gTotal / $count),
+        (int)round($bTotal / $count),
+    ];
+}
+
+/**
+ * Lighten (positive percent, toward white) or darken (negative percent,
+ * toward black) an RGB color. Percent is a fraction, e.g. 0.25 or -0.15.
+ *
+ * @param array{0:int,1:int,2:int} $rgb
+ * @return array{0:int,1:int,2:int}
+ */
+function adjust_color_brightness(array $rgb, float $percent): array
+{
+    [$r, $g, $b] = $rgb;
+    if ($percent >= 0) {
+        $r += (255 - $r) * $percent;
+        $g += (255 - $g) * $percent;
+        $b += (255 - $b) * $percent;
+    } else {
+        $factor = 1 + $percent;
+        $r *= $factor;
+        $g *= $factor;
+        $b *= $factor;
+    }
+
+    return [
+        (int)max(0, min(255, round($r))),
+        (int)max(0, min(255, round($g))),
+        (int)max(0, min(255, round($b))),
+    ];
 }
 
 function log_activity(string $entityType, int $entityId, string $action, array|string|null $details = null): void
