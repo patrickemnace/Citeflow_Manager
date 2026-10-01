@@ -704,7 +704,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $data['website'] = normalize_external_url((string)$data['website']);
-    $data['gbp_link'] = normalize_external_url((string)$data['gbp_link'], true);
+    // GBP links come in too many legitimate shapes (g.page/, maps.app.goo.gl/,
+    // CID-based links, long data-blob URLs with !-encoded segments) to force
+    // through strict URL parsing - accept whatever the user pastes verbatim.
+    $data['gbp_link'] = trim((string)$data['gbp_link']);
     $data = apply_autofill_profile_to_business_data(
         $data,
         extract_business_profile_from_website((string)$data['website'], (string)$data['gbp_link'])
@@ -962,8 +965,8 @@ render_header($id > 0 ? 'Edit Business' : 'Add Business');
         </div>
 
         <div class="flex flex-wrap gap-2 pt-2">
-            <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700" type="submit">Save Business</button>
-            <a class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100" href="<?php echo e(app_config()['base_url']); ?>/businesses.php">Cancel</a>
+            <button class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700" type="submit"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>Save Business</button>
+            <a class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100" href="<?php echo e(app_config()['base_url']); ?>/businesses.php"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>Cancel</a>
         </div>
     </form>
 </section>

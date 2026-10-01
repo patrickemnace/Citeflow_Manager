@@ -128,7 +128,7 @@ render_header('Notifications');
                 <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Notifications</h1>
                 <p class="text-sm text-slate-600 dark:text-slate-300 mt-1">Stay updated with system and workflow activity</p>
             </div>
-            <a class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors" href="<?php echo e(app_config()['base_url']); ?>/notifications.php?read_all=1">Mark all read</a>
+            <a class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 transition-colors" href="<?php echo e(app_config()['base_url']); ?>/notifications.php?read_all=1"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 11 7 15.5l9-11"/><path d="M9 11l4.5 4.5 9-11"/></svg>Mark all read</a>
         </div>
     </div>
 
@@ -137,23 +137,23 @@ render_header('Notifications');
         <div class="grid gap-4 sm:grid-cols-4">
             <div class="sm:col-span-1">
                 <label class="block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400 mb-2">From Date</label>
-                <input type="date" name="from_date" value="<?php echo e($fromDate); ?>" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition-colors focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-indigo-500">
+                <input type="date" name="from_date" value="<?php echo e($fromDate); ?>" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition-colors focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100">
             </div>
             <div class="sm:col-span-1">
                 <label class="block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400 mb-2">To Date</label>
-                <input type="date" name="to_date" value="<?php echo e($toDate); ?>" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition-colors focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-indigo-500">
+                <input type="date" name="to_date" value="<?php echo e($toDate); ?>" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition-colors focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100">
             </div>
             <div class="sm:col-span-1">
                 <label class="block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400 mb-2">Status</label>
-                <select name="read_status" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition-colors focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-indigo-500">
+                <select name="read_status" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition-colors focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100">
                     <option value="all" <?php echo $readStatus === 'all' ? 'selected' : ''; ?>>All</option>
                     <option value="unread" <?php echo $readStatus === 'unread' ? 'selected' : ''; ?>>Unread Only</option>
                     <option value="read" <?php echo $readStatus === 'read' ? 'selected' : ''; ?>>Read Only</option>
                 </select>
             </div>
             <div class="flex flex-col justify-end gap-2 sm:col-span-1">
-                <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors">Filter</button>
-                <a href="<?php echo e(app_config()['base_url']); ?>/notifications.php" class="text-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors">Reset</a>
+                <button type="submit" class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16l-6 8v6l-4 2v-8z"/></svg>Filter</button>
+                <a href="<?php echo e(app_config()['base_url']); ?>/notifications.php" class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 1 2.6 6.3"/><path d="M3 21v-6h6"/></svg>Reset</a>
             </div>
         </div>
     </form>

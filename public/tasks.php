@@ -181,8 +181,8 @@ $bizLogo          = trim((string)$businessGroup['business_logo']);
 </svg>
 <span class="collapse-label">Hide citations</span>
 </button>
-<a class="rounded-lg bg-brand-600 px-3 py-2 text-xs font-semibold text-white hover:bg-brand-700"
-   href="<?php echo e($baseUrl); ?>/location_manager.php?business_id=<?php echo e((string)$businessGroup['business_id']); ?>&open_citations=1">Open Location Manager</a>
+<a class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-3 py-2 text-xs font-semibold text-white hover:bg-brand-700"
+   href="<?php echo e($baseUrl); ?>/location_manager.php?business_id=<?php echo e((string)$businessGroup['business_id']); ?>&open_citations=1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-5.686-7-11a7 7 0 1 1 14 0c0 5.314-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>Open Location Manager</a>
 </div>
 </div>
 
@@ -221,11 +221,11 @@ $commentCount = (int)($task['comment_count'] ?? 0);
 </div>
 <div class="flex items-center gap-2">
 <?php if (trim((string)($task['submitted_url'] ?? '')) !== ''): ?>
-<a class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
-   href="<?php echo e((string)$task['submitted_url']); ?>" target="_blank" rel="noopener noreferrer">Open Citation URL</a>
+<a class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
+   href="<?php echo e((string)$task['submitted_url']); ?>" target="_blank" rel="noopener noreferrer"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>Open Citation URL</a>
 <?php endif; ?>
 <a href="<?php echo e($baseUrl); ?>/task_view.php?id=<?php echo e((string)$task['id']); ?>"
-   class="rounded-lg border border-brand-300 px-3 py-2 text-xs font-semibold text-brand-700 hover:bg-brand-50 dark:border-brand-700 dark:text-brand-400 dark:hover:bg-brand-950/30">View Task</a>
+   class="inline-flex items-center gap-1.5 rounded-lg border border-brand-300 px-3 py-2 text-xs font-semibold text-brand-700 hover:bg-brand-50 dark:border-brand-700 dark:text-brand-400 dark:hover:bg-brand-950/30"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>View Task</a>
 </div>
 </div>
 </div>
@@ -243,7 +243,7 @@ $commentCount = (int)($task['comment_count'] ?? 0);
 <div class="w-full max-w-4xl rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900">
 <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-700">
 <h3 id="metric_modal_title" class="text-lg font-bold text-slate-900 dark:text-white">Citation Details</h3>
-<button type="button" id="metric_modal_close" class="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">Close</button>
+<button type="button" id="metric_modal_close" class="inline-flex items-center justify-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>Close</button>
 </div>
 <div class="max-h-[70vh] overflow-auto p-4">
 <div id="metric_modal_empty" class="hidden rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-500 dark:border-slate-600 dark:bg-slate-800/50 dark:text-slate-300">No citations found for this metric.</div>
@@ -317,8 +317,8 @@ ${hasComments ? `<span class="inline-flex rounded-full bg-sky-100 px-2 py-0.5 te
 <p class="text-xs text-slate-500 dark:text-slate-400">Type: ${String(task.citation_type || '')} | Updated: ${String(task.updated_at || '')}</p>
 </div>
 <div class="flex items-center gap-2">
-${task.submitted_url ? `<a class="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800" href="${String(task.submitted_url)}" target="_blank" rel="noopener noreferrer">Citation URL</a>` : ''}
-<a class="rounded-lg border border-brand-300 px-2.5 py-1.5 text-xs font-semibold text-brand-700 hover:bg-brand-50 dark:border-brand-700 dark:text-brand-400 dark:hover:bg-brand-950/30" href="${baseUrl}/task_view.php?id=${Number(task.id || 0)}">View Task</a>
+${task.submitted_url ? `<a class="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800" href="${String(task.submitted_url)}" target="_blank" rel="noopener noreferrer"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>Citation URL</a>` : ''}
+<a class="inline-flex items-center gap-1 rounded-lg border border-brand-300 px-2.5 py-1.5 text-xs font-semibold text-brand-700 hover:bg-brand-50 dark:border-brand-700 dark:text-brand-400 dark:hover:bg-brand-950/30" href="${baseUrl}/task_view.php?id=${Number(task.id || 0)}"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>View Task</a>
 </div>
 </div>
 `;
