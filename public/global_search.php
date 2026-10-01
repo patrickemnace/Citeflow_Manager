@@ -101,8 +101,8 @@ render_header('Global Search');
     <p class="mt-1 text-sm font-medium text-slate-700 dark:text-slate-200">Search across businesses, citations, directories, and clients from one place.</p>
     <form method="get" class="mt-4 flex flex-wrap gap-2">
         <input name="q" type="search" value="<?php echo e($query); ?>" placeholder="Type at least 2 characters..." class="w-full flex-1 rounded-lg border border-slate-300 px-3 py-2.5 text-sm sm:min-w-[24rem]">
-        <button type="submit" class="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700">Search</button>
-        <a href="<?php echo e(app_config()['base_url']); ?>/global_search.php" class="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100">Reset</a>
+        <button type="submit" class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>Search</button>
+        <a href="<?php echo e(app_config()['base_url']); ?>/global_search.php" class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 1 2.6 6.3"/><path d="M3 21v-6h6"/></svg>Reset</a>
     </form>
 </section>
 

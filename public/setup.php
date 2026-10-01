@@ -63,7 +63,7 @@ render_header('Setup');
 
     <?php if ($done): ?>
         <div class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">Setup complete. You can now log in.</div>
-        <a class="mt-4 inline-flex rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-950" href="<?php echo e(app_config()['base_url']); ?>/">Go to Login</a>
+        <a class="mt-4 inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700" href="<?php echo e(app_config()['base_url']); ?>/"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>Go to Login</a>
     <?php else: ?>
         <form method="post" class="mt-6 space-y-4">
             <div class="grid gap-4 sm:grid-cols-2">
@@ -80,7 +80,7 @@ render_header('Setup');
                 <label class="mb-1 block text-sm font-semibold text-slate-700">Password</label>
                 <input class="w-full rounded-lg border border-slate-300 px-3 py-2.5" type="password" name="password" required minlength="8">
             </div>
-            <button class="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700" type="submit">Initialize System</button>
+            <button class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700" type="submit"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 3 14h7l-1 8 10-12h-7z"/></svg>Initialize System</button>
         </form>
     <?php endif; ?>
 </section>

@@ -261,14 +261,14 @@ if (table_exists('directories')) {
                                     </div>
                                     <p class="mt-1 min-h-[1.25rem] text-xs font-medium text-white/70" data-validation-message aria-live="polite"></p>
                                 </div>
-                                <button class="mt-2 inline-flex min-w-[9rem] items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-sky-800 transition hover:bg-sky-50" type="submit">Login</button>
+                                <button class="mt-2 inline-flex min-w-[9rem] items-center justify-center gap-1.5 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-sky-800 transition hover:bg-sky-50" type="submit"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>Login</button>
                             </form>
                         <?php else: ?>
                             <div class="space-y-4">
                                 <div class="rounded-2xl border border-amber-200/35 bg-amber-300/10 px-4 py-3 text-sm text-amber-50">
                                     Create your first admin account to continue.
                                 </div>
-                                <a class="inline-flex w-full items-center justify-center rounded-xl bg-amber-400 px-4 py-3 text-sm font-semibold text-slate-900 transition hover:bg-amber-300" href="<?php echo e($base); ?>/setup.php">Create Admin Account</a>
+                                <a class="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-amber-400 px-4 py-3 text-sm font-semibold text-slate-900 transition hover:bg-amber-300" href="<?php echo e($base); ?>/setup.php"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21a6 6 0 0 1 12 0"/><path d="M19 8v6M22 11h-6"/></svg>Create Admin Account</a>
                             </div>
                         <?php endif; ?>
                     </article>
@@ -316,7 +316,7 @@ if (table_exists('directories')) {
                                 </div>
                                 <p class="mt-1 min-h-[1.25rem] text-xs font-medium text-white/70" data-validation-message aria-live="polite"></p>
                             </div>
-                            <button class="mt-2 inline-flex min-w-[11rem] items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-50" type="submit">Open Client Portal</button>
+                            <button class="mt-2 inline-flex min-w-[11rem] items-center justify-center gap-1.5 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-50" type="submit"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>Open Client Portal</button>
                         </form>
                     </article>
                 </div>
