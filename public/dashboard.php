@@ -423,18 +423,35 @@ $pendingCitations = $countWithDate("SELECT COUNT(*) AS c FROM listing_tasks lt W
 $successRate = $totalCitations > 0 ? round(($liveCitations / $totalCitations) * 100, 1) : 0;
 $avgCitationsPerBusiness = $totalBusinesses > 0 ? round($totalCitations / $totalBusinesses, 1) : 0;
 $napCorrectRate = $liveCitations > 0 ? round(($correctNapCitations / $liveCitations) * 100, 1) : 0;
+$napErrorRate = $liveCitations > 0 ? round(($napErrorCitations / $liveCitations) * 100, 1) : 0;
+$pendingRate = $totalCitations > 0 ? round(($pendingCitations / $totalCitations) * 100, 1) : 0;
+$metricsMaxValue = max(1, $totalBusinesses, $totalDirectories, $totalCitations, $totalClients);
+$businessesRing = round(($totalBusinesses / $metricsMaxValue) * 100, 1);
+$directoriesRing = round(($totalDirectories / $metricsMaxValue) * 100, 1);
+$citationsRing = round(($totalCitations / $metricsMaxValue) * 100, 1);
+$clientsRing = round(($totalClients / $metricsMaxValue) * 100, 1);
 
+$metricIcons = [
+    'businesses' => '<path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M9 9h.01"/><path d="M9 12h.01"/><path d="M9 15h.01"/><path d="M15 9h.01"/><path d="M15 12h.01"/><path d="M15 15h.01"/>',
+    'directories' => '<path d="M3 7h18"/><path d="M6 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M8 11h8"/><path d="M8 15h6"/>',
+    'citations' => '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 2h6v4H9z"/><path d="M8 11h8M8 15h5"/>',
+    'live' => '<circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 5-5"/>',
+    'correct_nap' => '<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6l-8-3Z"/><path d="m9 12 2 2 4-4"/>',
+    'nap_error' => '<path d="M12 3 2 20h20L12 3Z"/><path d="M12 9v5"/><path d="M12 17h.01"/>',
+    'pending' => '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',
+    'clients' => '<circle cx="9" cy="7" r="4"/><path d="M17 11a4 4 0 1 0 0-8"/><path d="M3 21a6 6 0 0 1 12 0"/><path d="M17 21a6 6 0 0 0-3-5.2"/>',
+];
 $metricItems = [
-    ['key' => 'businesses', 'label' => 'Businesses', 'value' => $totalBusinesses, 'icon' => '🏢', 'text' => 'text-blue-700 dark:text-blue-300', 'label_text' => 'text-blue-600 dark:text-blue-200', 'bg' => 'bg-blue-50 dark:bg-blue-950/40', 'border' => 'border-blue-200 dark:border-blue-900/60', 'bar' => 'bg-blue-500 dark:bg-blue-400', 'subtext' => 'Total managed accounts'],
-    ['key' => 'directories', 'label' => 'Active Directories', 'value' => $totalDirectories, 'icon' => '📂', 'text' => 'text-violet-700 dark:text-violet-300', 'label_text' => 'text-violet-600 dark:text-violet-200', 'bg' => 'bg-violet-50 dark:bg-violet-950/40', 'border' => 'border-violet-200 dark:border-violet-900/60', 'bar' => 'bg-violet-500 dark:bg-violet-400', 'subtext' => 'Available platforms'],
-    ['key' => 'citations', 'label' => 'Total Citations', 'value' => $totalCitations, 'icon' => '📋', 'text' => 'text-cyan-700 dark:text-cyan-300', 'label_text' => 'text-cyan-600 dark:text-cyan-200', 'bg' => 'bg-cyan-50 dark:bg-cyan-950/40', 'border' => 'border-cyan-200 dark:border-cyan-900/60', 'bar' => 'bg-cyan-500 dark:bg-cyan-400', 'subtext' => $avgCitationsPerBusiness . ' per business'],
-    ['key' => 'live', 'label' => 'Live Citations', 'value' => $liveCitations, 'icon' => '✅', 'text' => 'text-emerald-700 dark:text-emerald-300', 'label_text' => 'text-emerald-600 dark:text-emerald-200', 'bg' => 'bg-emerald-50 dark:bg-emerald-950/40', 'border' => 'border-emerald-200 dark:border-emerald-900/60', 'bar' => 'bg-emerald-500 dark:bg-emerald-400', 'subtext' => $successRate . '% success rate'],
-    ['key' => 'correct_nap', 'label' => 'Correct NAP (Live)', 'value' => $correctNapCitations, 'icon' => '✔️', 'text' => 'text-teal-700 dark:text-teal-300', 'label_text' => 'text-teal-600 dark:text-teal-200', 'bg' => 'bg-teal-50 dark:bg-teal-950/40', 'border' => 'border-teal-200 dark:border-teal-900/60', 'bar' => 'bg-teal-500 dark:bg-teal-400', 'subtext' => $napCorrectRate . '% accuracy'],
-    ['key' => 'nap_error', 'label' => 'NAP Error (Live)', 'value' => $napErrorCitations, 'icon' => '⚠️', 'text' => 'text-rose-700 dark:text-rose-300', 'label_text' => 'text-rose-600 dark:text-rose-200', 'bg' => 'bg-rose-50 dark:bg-rose-950/40', 'border' => 'border-rose-200 dark:border-rose-900/60', 'bar' => 'bg-rose-500 dark:bg-rose-400', 'subtext' => 'Requires attention'],
-    ['key' => 'pending', 'label' => 'Pending Citations', 'value' => $pendingCitations, 'icon' => '⏳', 'text' => 'text-amber-700 dark:text-amber-300', 'label_text' => 'text-amber-600 dark:text-amber-200', 'bg' => 'bg-amber-50 dark:bg-amber-950/40', 'border' => 'border-amber-200 dark:border-amber-900/60', 'bar' => 'bg-amber-500 dark:bg-amber-400', 'subtext' => 'In progress'],
+    ['key' => 'businesses', 'label' => 'Businesses', 'value' => $totalBusinesses, 'text' => 'text-blue-700 dark:text-blue-300', 'chip' => 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300', 'bar' => 'border-l-blue-500 dark:border-l-blue-400', 'dist' => 'bg-blue-500 dark:bg-blue-400', 'ring' => 'text-blue-500 dark:text-blue-400', 'ring_track' => 'text-blue-100 dark:text-blue-900/40', 'ring_pct' => $businessesRing, 'ring_label' => 'of peak', 'subtext' => 'Total managed accounts'],
+    ['key' => 'directories', 'label' => 'Active Directories', 'value' => $totalDirectories, 'text' => 'text-violet-700 dark:text-violet-300', 'chip' => 'bg-violet-50 text-violet-600 dark:bg-violet-900/30 dark:text-violet-300', 'bar' => 'border-l-violet-500 dark:border-l-violet-400', 'dist' => 'bg-violet-500 dark:bg-violet-400', 'ring' => 'text-violet-500 dark:text-violet-400', 'ring_track' => 'text-violet-100 dark:text-violet-900/40', 'ring_pct' => $directoriesRing, 'ring_label' => 'of peak', 'subtext' => 'Available platforms'],
+    ['key' => 'citations', 'label' => 'Total Citations', 'value' => $totalCitations, 'text' => 'text-cyan-700 dark:text-cyan-300', 'chip' => 'bg-cyan-50 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-300', 'bar' => 'border-l-cyan-500 dark:border-l-cyan-400', 'dist' => 'bg-cyan-500 dark:bg-cyan-400', 'ring' => 'text-cyan-500 dark:text-cyan-400', 'ring_track' => 'text-cyan-100 dark:text-cyan-900/40', 'ring_pct' => $citationsRing, 'ring_label' => 'of peak', 'subtext' => $avgCitationsPerBusiness . ' per business'],
+    ['key' => 'live', 'label' => 'Live Citations', 'value' => $liveCitations, 'text' => 'text-emerald-700 dark:text-emerald-300', 'chip' => 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300', 'bar' => 'border-l-emerald-500 dark:border-l-emerald-400', 'dist' => 'bg-emerald-500 dark:bg-emerald-400', 'ring' => 'text-emerald-500 dark:text-emerald-400', 'ring_track' => 'text-emerald-100 dark:text-emerald-900/40', 'ring_pct' => $successRate, 'ring_label' => 'of citations', 'subtext' => $successRate . '% success rate'],
+    ['key' => 'correct_nap', 'label' => 'Correct NAP (Live)', 'value' => $correctNapCitations, 'text' => 'text-teal-700 dark:text-teal-300', 'chip' => 'bg-teal-50 text-teal-600 dark:bg-teal-900/30 dark:text-teal-300', 'bar' => 'border-l-teal-500 dark:border-l-teal-400', 'dist' => 'bg-teal-500 dark:bg-teal-400', 'ring' => 'text-teal-500 dark:text-teal-400', 'ring_track' => 'text-teal-100 dark:text-teal-900/40', 'ring_pct' => $napCorrectRate, 'ring_label' => 'of live', 'subtext' => $napCorrectRate . '% accuracy'],
+    ['key' => 'nap_error', 'label' => 'NAP Error (Live)', 'value' => $napErrorCitations, 'text' => 'text-rose-700 dark:text-rose-300', 'chip' => 'bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-300', 'bar' => 'border-l-rose-500 dark:border-l-rose-400', 'dist' => 'bg-rose-500 dark:bg-rose-400', 'ring' => 'text-rose-500 dark:text-rose-400', 'ring_track' => 'text-rose-100 dark:text-rose-900/40', 'ring_pct' => $napErrorRate, 'ring_label' => 'of live', 'subtext' => 'Requires attention'],
+    ['key' => 'pending', 'label' => 'Pending Citations', 'value' => $pendingCitations, 'text' => 'text-amber-700 dark:text-amber-300', 'chip' => 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-300', 'bar' => 'border-l-amber-500 dark:border-l-amber-400', 'dist' => 'bg-amber-500 dark:bg-amber-400', 'ring' => 'text-amber-500 dark:text-amber-400', 'ring_track' => 'text-amber-100 dark:text-amber-900/40', 'ring_pct' => $pendingRate, 'ring_label' => 'of citations', 'subtext' => 'In progress'],
 ];
 if ($isAdmin) {
-    $metricItems[] = ['key' => 'clients', 'label' => 'Clients', 'value' => $totalClients, 'icon' => '👥', 'text' => 'text-slate-700 dark:text-slate-300', 'label_text' => 'text-slate-600 dark:text-slate-200', 'bg' => 'bg-slate-50 dark:bg-slate-950/40', 'border' => 'border-slate-200 dark:border-slate-900/60', 'bar' => 'bg-slate-500 dark:bg-slate-400', 'subtext' => 'Active accounts'];
+    $metricItems[] = ['key' => 'clients', 'label' => 'Clients', 'value' => $totalClients, 'text' => 'text-slate-700 dark:text-slate-300', 'chip' => 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300', 'bar' => 'border-l-slate-400 dark:border-l-slate-500', 'dist' => 'bg-slate-500 dark:bg-slate-400', 'ring' => 'text-slate-500 dark:text-slate-400', 'ring_track' => 'text-slate-200 dark:text-slate-700', 'ring_pct' => $clientsRing, 'ring_label' => 'of peak', 'subtext' => 'Active accounts'];
 }
 $metricTotal = 0;
 foreach ($metricItems as $metric) {
@@ -493,43 +510,39 @@ $clientSnapshot = table_exists('clients') ? db()->query('SELECT c.id, c.name, CO
 
 render_header('Dashboard');
 ?>
-<div class="mb-8 rounded-2xl border border-slate-200 bg-gradient-to-r from-brand-50 via-white to-brand-100/60 p-6 shadow-sm dark:border-slate-700 dark:from-slate-900 dark:via-brand-950/35 dark:to-slate-800">
-    <div class="flex items-start justify-between gap-4">
-        <div>
-            <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white"><?php echo $isAdmin ? 'Admin' : 'Employee'; ?> Dashboard</h1>
-            <p class="mt-2 text-base font-medium text-slate-700 dark:text-slate-200"><?php echo $isAdmin ? 'Full system access enabled. Manage users, directories, and operational data.' : 'Your account has employee-level access. System administration and protected settings are hidden.'; ?></p>
-            <p class="mt-1 text-sm font-semibold text-brand-700 dark:text-brand-300">Analytics Range: <?php echo e($activeDateRangeLabel); ?></p>
+<div class="mb-6 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="min-w-0">
+            <h1 class="text-xl font-bold text-slate-900 dark:text-white"><?php echo $isAdmin ? 'Admin' : 'Employee'; ?> Dashboard</h1>
+            <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400"><?php echo $isAdmin ? 'Full system access · Manage users, directories, and operational data.' : 'Employee access · Administration and protected settings are hidden.'; ?></p>
         </div>
         <?php if ($isAdmin): ?>
-            <div class="flex flex-wrap justify-end gap-2">
-                <a class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700" href="<?php echo e(app_config()['base_url']); ?>/users.php">Manage Users</a>
-                <a class="rounded-lg border border-slate-300 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-white dark:border-slate-600 dark:bg-slate-800/70 dark:text-slate-100 dark:hover:bg-slate-700" href="<?php echo e(app_config()['base_url']); ?>/directories.php">Manage Directories</a>
+            <div class="flex flex-wrap gap-2">
+                <a class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700" href="<?php echo e(app_config()['base_url']); ?>/users.php"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M17 11a4 4 0 1 0 0-8"/><path d="M3 21a6 6 0 0 1 12 0"/><path d="M17 21a6 6 0 0 0-3-5.2"/></svg>Manage Users</a>
+                <a class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800" href="<?php echo e(app_config()['base_url']); ?>/directories.php"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18"/><path d="M6 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M8 11h8"/><path d="M8 15h6"/></svg>Manage Directories</a>
             </div>
         <?php endif; ?>
     </div>
-    <form method="get" class="mt-5 grid gap-2 rounded-xl border border-slate-200 bg-white/70 p-3 sm:grid-cols-[1fr_auto_auto_auto] sm:items-end dark:border-slate-700 dark:bg-slate-900/40">
-        <div>
-            <label class="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Date Range</label>
-            <select name="date_preset" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
-                <option value="7d" <?php echo $datePreset === '7d' ? 'selected' : ''; ?>>Last 7 Days</option>
-                <option value="30d" <?php echo $datePreset === '30d' ? 'selected' : ''; ?>>Last 30 Days</option>
-                <option value="90d" <?php echo $datePreset === '90d' ? 'selected' : ''; ?>>Last 90 Days</option>
-                <option value="custom" <?php echo $datePreset === 'custom' ? 'selected' : ''; ?>>Custom</option>
-                <option value="all" <?php echo $datePreset === 'all' ? 'selected' : ''; ?>>All Time</option>
-            </select>
+    <form method="get" class="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
+        <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Date Range</span>
+        <select name="date_preset" class="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
+            <option value="7d" <?php echo $datePreset === '7d' ? 'selected' : ''; ?>>Last 7 Days</option>
+            <option value="30d" <?php echo $datePreset === '30d' ? 'selected' : ''; ?>>Last 30 Days</option>
+            <option value="90d" <?php echo $datePreset === '90d' ? 'selected' : ''; ?>>Last 90 Days</option>
+            <option value="custom" <?php echo $datePreset === 'custom' ? 'selected' : ''; ?>>Custom</option>
+            <option value="all" <?php echo $datePreset === 'all' ? 'selected' : ''; ?>>All Time</option>
+        </select>
+        <div id="fromDateWrap" class="flex items-center gap-1.5">
+            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">From</span>
+            <input type="date" name="from_date" value="<?php echo e($rangeFrom ?? ''); ?>" class="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
         </div>
-        <div id="fromDateWrap">
-            <label class="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">From</label>
-            <input type="date" name="from_date" value="<?php echo e($rangeFrom ?? ''); ?>" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
+        <div id="toDateWrap" class="flex items-center gap-1.5">
+            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">To</span>
+            <input type="date" name="to_date" value="<?php echo e($rangeTo ?? ''); ?>" class="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
         </div>
-        <div id="toDateWrap">
-            <label class="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">To</label>
-            <input type="date" name="to_date" value="<?php echo e($rangeTo ?? ''); ?>" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
-        </div>
-        <div class="flex gap-2">
-            <button type="submit" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">Apply</button>
-            <a href="<?php echo e(app_config()['base_url']); ?>/dashboard.php" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">Reset</a>
-        </div>
+        <button type="submit" class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16l-6 8v6l-4 2v-8z"/></svg>Apply</button>
+        <a href="<?php echo e(app_config()['base_url']); ?>/dashboard.php" class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 1 2.6 6.3"/><path d="M3 21v-6h6"/></svg>Reset</a>
+        <span class="ml-auto text-xs font-medium text-slate-400 dark:text-slate-500">Showing: <?php echo e($activeDateRangeLabel); ?></span>
     </form>
 </div>
 
@@ -540,28 +553,36 @@ render_header('Dashboard');
             <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">Click any metric to view detailed breakdown</p>
         </div>
     </div>
-    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <?php
+            $ringRadius = 15.5;
+            $ringCircumference = 2 * M_PI * $ringRadius;
+        ?>
         <?php foreach ($metricItems as $metric): ?>
+            <?php
+                $ringPct = max(0.0, min(100.0, (float)($metric['ring_pct'] ?? 0)));
+                $ringOffset = $ringCircumference * (1 - $ringPct / 100);
+            ?>
             <button
                 type="button"
-                class="metric-box group relative rounded-xl border <?php echo e($metric['border']); ?> <?php echo e($metric['bg']); ?> px-5 py-6 text-left shadow-sm transition-all duration-200 hover:border-opacity-100 hover:shadow-lg hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900"
+                class="metric-box group relative flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900"
                 data-metric-key="<?php echo e((string)$metric['key']); ?>"
                 data-metric-label="<?php echo e((string)$metric['label']); ?>"
             >
-                <div class="absolute right-4 top-4 text-3xl opacity-20 group-hover:opacity-40 transition-opacity"><?php echo e((string)$metric['icon']); ?></div>
-                <div class="flex items-start justify-between">
-                    <div>
-                        <p class="text-[11px] font-bold uppercase tracking-widest <?php echo e($metric['label_text']); ?>"><?php echo e((string)$metric['label']); ?></p>
-                        <p class="mt-3 text-4xl font-extrabold leading-none <?php echo e($metric['text']); ?>"><?php echo e((string)$metric['value']); ?></p>
-                        <p class="mt-2 text-xs font-medium text-slate-600 dark:text-slate-400"><?php echo e((string)($metric['subtext'] ?? '')); ?></p>
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0 <?php echo e($metric['text']); ?>" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><?php echo $metricIcons[$metric['key']] ?? ''; ?></svg>
+                        <span class="truncate text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"><?php echo e((string)$metric['label']); ?></span>
                     </div>
-                    <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-white/50 dark:bg-slate-800/50 group-hover:bg-white dark:group-hover:bg-slate-700 transition">
-                        <span class="text-xl"><?php echo e((string)$metric['icon']); ?></span>
-                    </div>
+                    <p class="mt-2 text-3xl font-bold leading-none text-slate-900 dark:text-white"><?php echo e((string)$metric['value']); ?></p>
+                    <p class="mt-1.5 text-xs text-slate-400 dark:text-slate-500"><?php echo e((string)($metric['subtext'] ?? '')); ?></p>
                 </div>
-                <div class="mt-4 pt-4 border-t <?php echo e($metric['border']); ?> flex items-center text-xs font-semibold text-slate-600 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300 transition">
-                    <span>View Details</span>
-                    <span class="ml-1 group-hover:translate-x-0.5 transition">→</span>
+                <div class="relative shrink-0" title="<?php echo e((string)$ringPct); ?>% <?php echo e((string)($metric['ring_label'] ?? '')); ?>">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-14 w-14 -rotate-90" viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="<?php echo e((string)$ringRadius); ?>" fill="none" stroke-width="3" class="<?php echo e($metric['ring_track'] ?? 'text-slate-100 dark:text-slate-800'); ?>" stroke="currentColor"></circle>
+                        <circle cx="18" cy="18" r="<?php echo e((string)$ringRadius); ?>" fill="none" stroke-width="3" stroke-linecap="round" class="<?php echo e($metric['ring'] ?? 'text-brand-500'); ?> transition-all duration-500" stroke="currentColor" stroke-dasharray="<?php echo e((string)round($ringCircumference, 2)); ?>" stroke-dashoffset="<?php echo e((string)round($ringOffset, 2)); ?>"></circle>
+                    </svg>
+                    <span class="absolute inset-0 flex items-center justify-center text-[11px] font-bold text-slate-700 dark:text-slate-200"><?php echo e((string)$ringPct); ?>%</span>
                 </div>
             </button>
         <?php endforeach; ?>
@@ -572,7 +593,7 @@ render_header('Dashboard');
     <div class="w-full max-w-5xl rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900">
         <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-700">
             <h3 id="metricDetailTitle" class="text-base font-bold text-slate-900 dark:text-slate-100">Metric Details</h3>
-            <button id="closeMetricDetailModal" type="button" class="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">Close</button>
+            <button id="closeMetricDetailModal" type="button" class="inline-flex items-center justify-center gap-1 rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>Close</button>
         </div>
         <div class="max-h-[70vh] overflow-auto p-5">
             <div id="metricDetailEmpty" class="hidden rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">No data available for this metric.</div>
@@ -592,7 +613,7 @@ render_header('Dashboard');
     <div class="w-full max-w-5xl rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900">
         <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-700">
             <h3 id="citationDrilldownTitle" class="text-base font-bold text-slate-900 dark:text-slate-100">Citation Drilldown</h3>
-            <button id="closeCitationDrilldownModal" type="button" class="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">Close</button>
+            <button id="closeCitationDrilldownModal" type="button" class="inline-flex items-center justify-center gap-1 rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>Close</button>
         </div>
         <div class="max-h-[70vh] overflow-auto p-5">
             <div id="citationDrilldownEmpty" class="hidden rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">No citation records found for this selection.</div>
@@ -625,40 +646,37 @@ render_header('Dashboard');
         </div>
     </div>
     <?php if ($metricTotal > 0): ?>
+        <?php
+            $maxMetricValue = 0;
+            foreach ($metricItems as $metric) {
+                $maxMetricValue = max($maxMetricValue, (int)$metric['value']);
+            }
+            $sortedMetricItems = $metricItems;
+            usort($sortedMetricItems, static function (array $a, array $b): int {
+                return (int)$b['value'] <=> (int)$a['value'];
+            });
+        ?>
         <div class="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900/50">
-            <div class="mb-6">
-                <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Distribution</p>
-                <div class="h-4 w-full overflow-hidden rounded-lg bg-slate-200 dark:bg-slate-700">
-                    <div class="flex h-full w-full">
-                        <?php foreach ($metricItems as $metric): ?>
-                            <?php
-                                $value = (int)$metric['value'];
-                                $ratio = round(($value / $metricTotal) * 100, 2);
-                            ?>
-                            <div class="h-full <?php echo e($metric['bar']); ?>" style="width: <?php echo e((string)$ratio); ?>%;" title="<?php echo e((string)$metric['label']); ?>: <?php echo e((string)$ratio); ?>%"></div>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-            </div>
-            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                <?php foreach ($metricItems as $metric): ?>
+            <p class="mb-5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Distribution by Metric</p>
+            <div class="space-y-2.5">
+                <?php foreach ($sortedMetricItems as $metric): ?>
                     <?php
                         $value = (int)$metric['value'];
-                        $ratio = round(($value / $metricTotal) * 100, 1);
+                        $widthPct = $maxMetricValue > 0 ? round(($value / $maxMetricValue) * 100, 1) : 0;
                     ?>
                     <button
                         type="button"
-                        class="metric-summary-btn flex items-center justify-between rounded-lg border <?php echo e($metric['border']); ?> bg-slate-50/50 px-4 py-3 transition hover:border-opacity-100 hover:bg-white dark:bg-slate-800/30 dark:hover:bg-slate-800"
+                        class="metric-summary-btn group flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800/60"
                         data-metric-key="<?php echo e((string)$metric['key']); ?>"
                     >
-                        <div class="flex items-center gap-2.5">
-                            <span class="text-lg"><?php echo e((string)$metric['icon']); ?></span>
-                            <div class="text-left">
-                                <p class="text-xs font-semibold text-slate-700 dark:text-slate-300"><?php echo e((string)$metric['label']); ?></p>
-                                <p class="text-xs text-slate-500 dark:text-slate-400"><?php echo e((string)$ratio); ?>%</p>
-                            </div>
-                        </div>
-                        <span class="text-sm font-bold text-slate-800 dark:text-slate-100"><?php echo e((string)$value); ?></span>
+                        <span class="flex w-36 shrink-0 items-center gap-1.5 sm:w-44">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0 <?php echo e($metric['text']); ?>" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><?php echo $metricIcons[$metric['key']] ?? ''; ?></svg>
+                            <span class="truncate text-xs font-semibold text-slate-600 dark:text-slate-300"><?php echo e((string)$metric['label']); ?></span>
+                        </span>
+                        <span class="relative h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                            <span class="absolute inset-y-0 left-0 rounded-full <?php echo e($metric['dist']); ?>" style="width: <?php echo e((string)$widthPct); ?>%;"></span>
+                        </span>
+                        <span class="w-10 shrink-0 text-right text-sm font-bold text-slate-900 dark:text-white"><?php echo e((string)$value); ?></span>
                     </button>
                 <?php endforeach; ?>
             </div>
@@ -675,7 +693,7 @@ render_header('Dashboard');
                 <h2 class="text-2xl font-bold text-slate-900">Citation Status Pipeline</h2>
                 <p class="mt-1 text-sm text-slate-500 dark:text-slate-300">Current workload distribution by status.</p>
             </div>
-            <a class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800" href="<?php echo e(app_config()['base_url']); ?>/businesses.php">Open Businesses</a>
+            <a class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800" href="<?php echo e(app_config()['base_url']); ?>/businesses.php"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M9 9h.01"/><path d="M9 12h.01"/><path d="M9 15h.01"/><path d="M15 9h.01"/><path d="M15 12h.01"/><path d="M15 15h.01"/></svg>Open Businesses</a>
         </div>
         <div class="space-y-3.5">
             <?php foreach ($statusOrder as $statusKey): ?>
@@ -704,7 +722,7 @@ render_header('Dashboard');
                     <h2 class="text-2xl font-bold text-slate-900">Recent Activity</h2>
                     <p class="mt-1 text-sm text-slate-500 dark:text-slate-300">Latest changes across all system entities.</p>
                 </div>
-                <a class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800" href="<?php echo e(app_config()['base_url']); ?>/activity_logs.php">View All</a>
+                <a class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800" href="<?php echo e(app_config()['base_url']); ?>/activity_logs.php"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11"/><path d="M9 12h11"/><path d="M9 18h11"/><path d="M4 6h.01"/><path d="M4 12h.01"/><path d="M4 18h.01"/></svg>View All</a>
             </div>
             <div class="space-y-2">
                 <?php foreach ($recentActivity as $item): ?>
@@ -729,7 +747,7 @@ render_header('Dashboard');
                 <h2 class="text-2xl font-bold text-slate-900">Completeness Watchlist</h2>
                 <p class="mt-1 text-sm text-slate-500 dark:text-slate-300">Lowest readiness scores requiring attention.</p>
             </div>
-            <a class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800" href="<?php echo e(app_config()['base_url']); ?>/businesses.php">Open Businesses</a>
+            <a class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800" href="<?php echo e(app_config()['base_url']); ?>/businesses.php"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M9 9h.01"/><path d="M9 12h.01"/><path d="M9 15h.01"/><path d="M15 9h.01"/><path d="M15 12h.01"/><path d="M15 15h.01"/></svg>Open Businesses</a>
         </div>
         <div class="space-y-3">
             <?php foreach ($completenessLeaderboard as $item): ?>
@@ -755,7 +773,7 @@ render_header('Dashboard');
             <h2 class="text-2xl font-bold text-slate-900">Client Snapshot</h2>
             <p class="mt-1 text-sm text-slate-500 dark:text-slate-300">Business volume distribution by account.</p>
         </div>
-            <a class="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700" href="<?php echo e($exportCsvUrl); ?>">Export CSV</a>
+            <a class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700" href="<?php echo e($exportCsvUrl); ?>"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>Export CSV</a>
     </div>
     <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         <?php foreach ($clientSnapshot as $client): ?>
