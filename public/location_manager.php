@@ -1046,7 +1046,10 @@ render_header('Location Manager');
                             <option value="Lead Aggregators">Lead Aggregators</option>
                         </select>
                         <button id="citations_sort_btn" type="button" class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Sort: Newest</button>
-                        <button id="citations_export" type="button" class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hidden sm:inline-block">Export CSV</button>
+                        <button id="citations_export" type="button" class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-600 bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:border-emerald-700 hover:bg-emerald-700 dark:border-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 disabled:cursor-wait disabled:opacity-60">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+                            <span id="citations_export_label">Export Excel</span>
+                        </button>
                         </div>
                         <div class="flex w-full sm:w-auto flex-wrap items-center justify-between sm:justify-end gap-2">
                             <input type="hidden" form="bulk_assign_form" name="action" value="bulk_assign_citations">
@@ -2235,6 +2238,7 @@ render_header('Location Manager');
     const citationsSearch = document.getElementById('citations_search');
     const citationsSortBtn = document.getElementById('citations_sort_btn');
     const citationsExport = document.getElementById('citations_export');
+    const citationsExportLabel = document.getElementById('citations_export_label');
     const citationMetricButtons = Array.from(document.querySelectorAll('.citation-metric-btn'));
     const citationsTbody = document.getElementById('citations_tbody');
     const noResultsRow = document.getElementById('citations_no_results');
@@ -2537,52 +2541,60 @@ render_header('Location Manager');
         updateCitationMetrics();
     };
 
-    const csvEscape = (value) => {
-        const str = String(value ?? '');
-        return '"' + str.replace(/"/g, '""') + '"';
-    };
-
-    const exportFilteredCitations = () => {
+    const exportFilteredCitations = async () => {
         const rows = getCitationRows().filter((row) => row.style.display !== 'none');
         if (!rows.length) {
             return;
         }
 
-        const headers = ['Directory', 'Citation Type', 'Status', 'NAP Status', 'Priority', 'Citation URL', 'Proof URL', 'Assignee', 'Updated', 'Notes'];
-        const lines = [headers.map(csvEscape).join(',')];
+        const payloadRows = rows.map((row) => ({
+            directory: (row.getAttribute('data-directory') || '').trim(),
+            citation_type: (row.getAttribute('data-citation-type') || '').trim(),
+            status: (row.getAttribute('data-status') || '').trim(),
+            nap_status: (row.getAttribute('data-nap-status') || '').trim(),
+            url: (row.getAttribute('data-url') || '').trim(),
+            proof_url: (row.getAttribute('data-proof-url') || '').trim(),
+            assignee: (row.getAttribute('data-assignee') || '').trim(),
+            updated: (row.getAttribute('data-updated') || '').trim(),
+            notes: (row.getAttribute('data-notes') || '').trim(),
+        }));
 
-        rows.forEach((row) => {
-            const cells = row.querySelectorAll('td');
-            if (cells.length < 5) {
-                return;
+        const originalLabel = citationsExportLabel ? citationsExportLabel.textContent : '';
+        citationsExport.disabled = true;
+        if (citationsExportLabel) {
+            citationsExportLabel.textContent = 'Exporting...';
+        }
+
+        try {
+            const response = await fetch(`${locationManagerBaseUrl}/export_citations_xlsx.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ business_id: <?php echo (int)$businessId; ?>, rows: payloadRows }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Export failed');
             }
 
-            const directory = (row.getAttribute('data-directory') || '').trim();
-            const citationType = (row.getAttribute('data-citation-type') || '').trim();
-            const status = (row.getAttribute('data-status') || '').trim();
-            const napStatus = (row.getAttribute('data-nap-status') || '').trim();
-            const priority = (row.getAttribute('data-priority-level') || '').trim();
-            const url = (row.getAttribute('data-url') || '').trim();
-            const proofUrl = (row.getAttribute('data-proof-url') || '').trim();
-            const assignee = (row.getAttribute('data-assignee') || '').trim();
-            const updated = (row.getAttribute('data-updated') || '').trim();
-            const notes = (row.getAttribute('data-notes') || '').trim();
+            const blob = await response.blob();
+            const downloadUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            const dateTag = new Date().toISOString().slice(0, 10);
 
-            lines.push([directory, citationType, status, napStatus, priority, url, proofUrl, assignee, updated, notes].map(csvEscape).join(','));
-        });
-
-        const csvContent = lines.join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const downloadUrl = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        const dateTag = new Date().toISOString().slice(0, 10);
-
-        link.href = downloadUrl;
-        link.download = `citations-export-${dateTag}.csv`;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        URL.revokeObjectURL(downloadUrl);
+            link.href = downloadUrl;
+            link.download = `citations-export-${dateTag}.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(downloadUrl);
+        } catch (err) {
+            alert('Could not export citations. Please try again.');
+        } finally {
+            citationsExport.disabled = false;
+            if (citationsExportLabel) {
+                citationsExportLabel.textContent = originalLabel;
+            }
+        }
     };
 
     if (citationsTypeFilter) {

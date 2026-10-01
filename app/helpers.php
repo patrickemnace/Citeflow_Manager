@@ -370,6 +370,107 @@ function optimize_image_binary(string $bytes, int $maxUploadSize, ?string &$erro
     return null;
 }
 
+function extract_dominant_image_color(string $filePath): ?array
+{
+    if (!function_exists('imagecreatefromstring') || !is_file($filePath)) {
+        return null;
+    }
+
+    $bytes = @file_get_contents($filePath);
+    if ($bytes === false || $bytes === '') {
+        return null;
+    }
+
+    $source = @imagecreatefromstring($bytes);
+    if (!$source instanceof GdImage) {
+        return null;
+    }
+
+    $thumbSize = 24;
+    $thumb = imagecreatetruecolor($thumbSize, $thumbSize);
+    if (!$thumb instanceof GdImage) {
+        imagedestroy($source);
+        return null;
+    }
+
+    imagealphablending($thumb, false);
+    imagesavealpha($thumb, true);
+    $transparent = imagecolorallocatealpha($thumb, 0, 0, 0, 127);
+    imagefill($thumb, 0, 0, $transparent);
+
+    imagecopyresampled(
+        $thumb,
+        $source,
+        0,
+        0,
+        0,
+        0,
+        $thumbSize,
+        $thumbSize,
+        imagesx($source),
+        imagesy($source)
+    );
+    imagedestroy($source);
+
+    $totalRed = 0;
+    $totalGreen = 0;
+    $totalBlue = 0;
+    $counted = 0;
+
+    for ($y = 0; $y < $thumbSize; $y++) {
+        for ($x = 0; $x < $thumbSize; $x++) {
+            $rgba = imagecolorat($thumb, $x, $y);
+            $alpha = ($rgba >> 24) & 0x7F;
+            if ($alpha > 100) {
+                continue;
+            }
+
+            $red = ($rgba >> 16) & 0xFF;
+            $green = ($rgba >> 8) & 0xFF;
+            $blue = $rgba & 0xFF;
+
+            $isNearWhite = ($red > 235 && $green > 235 && $blue > 235);
+            $isNearBlack = ($red < 20 && $green < 20 && $blue < 20);
+            if ($isNearWhite || $isNearBlack) {
+                continue;
+            }
+
+            $totalRed += $red;
+            $totalGreen += $green;
+            $totalBlue += $blue;
+            $counted++;
+        }
+    }
+
+    imagedestroy($thumb);
+
+    if ($counted === 0) {
+        return null;
+    }
+
+    return [
+        (int)round($totalRed / $counted),
+        (int)round($totalGreen / $counted),
+        (int)round($totalBlue / $counted),
+    ];
+}
+
+function adjust_color_brightness(array $rgb, float $percent): array
+{
+    $adjusted = [];
+    foreach (array_slice($rgb, 0, 3) as $channel) {
+        $value = (int)$channel;
+        if ($percent >= 0) {
+            $value = (int)round($value + (255 - $value) * $percent);
+        } else {
+            $value = (int)round($value * (1 + $percent));
+        }
+        $adjusted[] = max(0, min(255, $value));
+    }
+
+    return $adjusted;
+}
+
 function save_image_binary_to_uploads(
     string $bytes,
     string $prefix,
