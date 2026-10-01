@@ -751,7 +751,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && post('action') === 'delete_citation
     redirect('/location_manager.php?business_id=' . $businessId . '&open_citations=1&citations_notice=' . rawurlencode($citationsNotice));
 }
 
-$directoriesStmt = db()->prepare('SELECT id, name, submission_url, website, directory_type, country, priority_level, requires_login
+$directoriesStmt = db()->prepare('SELECT id, name, logo_path, submission_url, website, directory_type, country, priority_level, requires_login
                                                                     FROM directories
                                                                     WHERE is_active = 1
                                                                         AND id NOT IN (
@@ -797,6 +797,40 @@ if ($citationsModalNotice !== '' && isset($_SESSION['flash'])) {
     unset($_SESSION['flash']);
 }
 $openCitationsOnLoad = (string)($_GET['open_citations'] ?? '') === '1' || $citationsModalNotice !== '';
+
+function extract_google_customer_id(string $gbpLink): string
+{
+    $gbpLink = trim($gbpLink);
+    if ($gbpLink === '') {
+        return '';
+    }
+
+    // Common case: a direct ?id= or ?cid= query param (e.g. local.google.com/place?id=...).
+    $parts = parse_url($gbpLink);
+    if (is_array($parts) && !empty($parts['query'])) {
+        parse_str((string)$parts['query'], $query);
+        foreach (['id', 'cid'] as $key) {
+            $value = (string)($query[$key] ?? '');
+            if ($value !== '' && ctype_digit($value)) {
+                return $value;
+            }
+        }
+    }
+
+    // google.com/maps/place/... URLs embed the CID as a hex pair in the data=
+    // segment instead: !1s0x<feature>:0x<cid-in-hex>. Convert it to the same
+    // decimal form Google's own UI shows, using bcmath since the value
+    // routinely exceeds PHP's native (signed 64-bit) integer range.
+    if (function_exists('bcadd') && preg_match('/!1s0x[0-9a-f]+:0x([0-9a-f]+)/i', $gbpLink, $m)) {
+        $decimal = '0';
+        foreach (str_split(strtoupper($m[1])) as $digit) {
+            $decimal = bcadd(bcmul($decimal, '16'), (string)hexdec($digit));
+        }
+        return $decimal;
+    }
+
+    return '';
+}
 
 function render_clickable_text(string $text): string
 {
@@ -858,47 +892,143 @@ render_header('Location Manager');
                     <?php foreach ($pendingLocationBulkDeleteRows as $pendingCitationRow): ?>
                         <input type="hidden" name="citation_ids[]" value="<?php echo e((string)($pendingCitationRow['id'] ?? 0)); ?>">
                     <?php endforeach; ?>
-                    <button type="submit" class="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700">Yes, delete selected</button>
+                    <button type="submit" class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>Yes, delete selected</button>
                 </form>
-                <a href="<?php echo e(app_config()['base_url']); ?>/location_manager.php?business_id=<?php echo e((string)$businessId); ?>&open_citations=1" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">Cancel</a>
+                <a href="<?php echo e(app_config()['base_url']); ?>/location_manager.php?business_id=<?php echo e((string)$businessId); ?>&open_citations=1" class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>Cancel</a>
             </div>
         </div>
     </div>
 <?php endif; ?>
 
 <section class="mb-6 grid gap-6 lg:grid-cols-3">
-    <article class="rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900 p-5 shadow-sm lg:col-span-2">
-        <div class="flex items-start gap-4">
-            <div class="flex-1 min-w-0">
-                <h1 class="text-xl font-bold text-slate-900 dark:text-white">Location Manager: <?php echo e($business['name']); ?></h1>
-                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Detailed profile and citation workflow for this business location.</p>
-                <div class="mt-3 flex flex-wrap items-center gap-2">
-                    <button id="open_sticky_notes" type="button" class="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/30 px-3 py-2 text-xs font-semibold text-amber-800 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/50">Open Sticky Notes</button>
-                    <button id="open_business_edit_modal" type="button" class="inline-flex items-center gap-1.5 rounded-lg border border-sky-300 dark:border-sky-800 bg-sky-50 dark:bg-sky-900/30 px-3 py-2 text-xs font-semibold text-sky-800 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/50">Edit Business Info</button>
+    <?php
+        $businessLogoPathForBanner = trim((string)($business['logo_path'] ?? ''));
+        $bannerStyle = '';
+        $bannerClasses = 'h-20 bg-gradient-to-r from-brand-600 via-brand-500 to-brand-400 dark:from-brand-800 dark:via-brand-700 dark:to-brand-600';
+        if ($businessLogoPathForBanner !== '') {
+            $logoFsPath = realpath(__DIR__ . '/' . $businessLogoPathForBanner);
+            $uploadsFsRoot = realpath(__DIR__ . '/uploads');
+            if ($logoFsPath !== false && $uploadsFsRoot !== false && str_starts_with($logoFsPath, $uploadsFsRoot)) {
+                $dominantColor = extract_dominant_image_color($logoFsPath);
+                if ($dominantColor !== null) {
+                    $bannerFrom = adjust_color_brightness($dominantColor, -0.2);
+                    $bannerVia = $dominantColor;
+                    $bannerTo = adjust_color_brightness($dominantColor, 0.28);
+                    $bannerStyle = 'background: linear-gradient(to right, rgb(' . implode(',', $bannerFrom) . '), rgb(' . implode(',', $bannerVia) . '), rgb(' . implode(',', $bannerTo) . '));';
+                    $bannerClasses = 'h-20';
+                }
+            }
+        }
+    ?>
+    <article class="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900 lg:col-span-2">
+        <div class="<?php echo e($bannerClasses); ?>" style="<?php echo e($bannerStyle); ?>"></div>
+        <div class="px-5 pb-5">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-end">
+                <?php $businessLogoPath = $businessLogoPathForBanner; ?>
+                <div class="-mt-12 shrink-0">
+                    <?php if ($businessLogoPath !== ''): ?>
+                        <img class="h-24 w-24 rounded-2xl border-4 border-white bg-white object-contain shadow-md dark:border-slate-900 dark:bg-slate-800 sm:h-28 sm:w-28" src="<?php echo e(public_asset_url($businessLogoPath)); ?>" alt="Business logo">
+                    <?php else: ?>
+                        <div class="flex h-24 w-24 items-center justify-center rounded-2xl border-4 border-white bg-brand-50 text-3xl font-bold text-brand-600 shadow-md dark:border-slate-900 dark:bg-brand-900/40 dark:text-brand-300 sm:h-28 sm:w-28 sm:text-4xl"><?php echo e(strtoupper(substr(trim((string)$business['name']), 0, 1)) ?: '?'); ?></div>
+                    <?php endif; ?>
+                </div>
+                <div class="min-w-0 flex-1 pt-1">
+                    <h1 class="truncate text-2xl font-extrabold text-slate-900 dark:text-white"><?php echo e($business['name']); ?></h1>
+                    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Detailed profile and citation workflow for this business location.</p>
                 </div>
             </div>
-            <?php if (trim((string)($business['logo_path'] ?? '')) !== ''): ?>
-                <div class="flex-shrink-0">
-                    <img class="h-20 w-40 rounded-xl border border-slate-200 dark:border-slate-700 object-contain bg-white dark:bg-slate-800 p-2" src="<?php echo e(public_asset_url((string)$business['logo_path'])); ?>" alt="Business logo">
-                </div>
-            <?php endif; ?>
+            <div class="mt-4 flex flex-wrap items-center gap-2">
+                <button id="open_sticky_notes" type="button" class="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/30 px-3 py-2 text-xs font-semibold text-amber-800 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/50"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h12l4 4v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z"/><path d="M16 4v4h4"/><path d="M8 11h8M8 15h5"/></svg>Open Sticky Notes</button>
+                <button id="open_business_edit_modal" type="button" class="inline-flex items-center gap-1.5 rounded-lg border border-sky-300 dark:border-sky-800 bg-sky-50 dark:bg-sky-900/30 px-3 py-2 text-xs font-semibold text-sky-800 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/50"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.586 3.586a2 2 0 1 1 2.828 2.828l-8.7 8.7a2 2 0 0 1-.878.513l-2.73.78a.75.75 0 0 1-.927-.927l.78-2.73a2 2 0 0 1 .513-.878l8.7-8.7Z"/></svg>Edit Business Info</button>
+            </div>
         </div>
 
-        <dl class="mt-5 grid gap-3 sm:grid-cols-2">
-            <div><dt class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Phone</dt><dd class="text-sm font-medium text-slate-800 dark:text-slate-200"><?php echo $business['phone'] ? '<a href="tel:' . e($business['phone']) . '" class="text-sky-600 dark:text-sky-400 hover:underline">' . e($business['phone']) . '</a>' : '—'; ?></dd></div>
-            <div><dt class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Website</dt><dd class="text-sm font-medium text-slate-800 dark:text-slate-200"><?php echo $business['website'] ? '<a href="' . e($business['website']) . '" target="_blank" rel="noopener noreferrer" class="text-sky-600 dark:text-sky-400 hover:underline break-all">' . e($business['website']) . '</a>' : '—'; ?></dd></div>
-            <div><dt class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">GBP Link</dt><dd class="text-sm font-medium text-slate-800 dark:text-slate-200"><?php echo ($business['gbp_link'] ?? '') ? '<a href="' . e((string)$business['gbp_link']) . '" target="_blank" rel="noopener noreferrer" class="text-sky-600 dark:text-sky-400 hover:underline break-all">' . e((string)$business['gbp_link']) . '</a>' : '—'; ?></dd></div>
-            <div><dt class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Email</dt><dd class="text-sm font-medium text-slate-800 dark:text-slate-200"><?php echo $business['email'] ? '<a href="mailto:' . e($business['email']) . '" class="text-sky-600 dark:text-sky-400 hover:underline">' . e($business['email']) . '</a>' : '—'; ?></dd></div>
-            <div><dt class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Contact Name</dt><dd class="text-sm font-medium text-slate-800 dark:text-slate-200"><?php echo e((string)($business['contact_name'] ?? '')); ?></dd></div>
-            <div><dt class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">In Business Since</dt><dd class="text-sm font-medium text-slate-800 dark:text-slate-200"><?php echo e((string)($business['in_business_since'] ?? '')); ?></dd></div>
-            <div class="sm:col-span-2"><dt class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Categories</dt><dd class="text-sm font-medium text-slate-800 dark:text-slate-200"><?php echo render_clickable_text((string)(($business['categories'] ?? '') !== '' ? $business['categories'] : $business['category'])); ?></dd></div>
-            <div class="sm:col-span-2"><dt class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Address</dt><dd class="text-sm font-medium text-slate-800 dark:text-slate-200"><?php echo render_clickable_text($business['address_line1'] . ', ' . $business['city'] . ', ' . $business['state'] . ' ' . $business['postal_code'] . ', ' . $business['country']); ?></dd></div>
-            <div class="sm:col-span-2"><dt class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Business Hours</dt><dd class="text-sm font-medium whitespace-pre-wrap text-slate-800 dark:text-slate-200"><?php echo e((string)$business['hours_json']); ?></dd></div>
-            <div class="sm:col-span-2"><dt class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Services</dt><dd class="text-sm font-medium whitespace-pre-wrap text-slate-800 dark:text-slate-200"><?php echo e((string)($business['services'] ?? '')); ?></dd></div>
-            <div class="sm:col-span-2"><dt class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Payment Methods</dt><dd class="text-sm font-medium text-slate-800 dark:text-slate-200"><?php echo render_clickable_text((string)($business['payment_methods'] ?? '')); ?></dd></div>
-            <div class="sm:col-span-2"><dt class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Social Media</dt><dd class="text-sm font-medium text-slate-800 dark:text-slate-200"><?php echo render_clickable_text((string)($business['social_media'] ?? '')); ?></dd></div>
-            <div class="sm:col-span-2"><dt class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Login Credentials</dt><dd class="text-sm font-medium text-slate-800 dark:text-slate-200"><?php echo render_clickable_text((string)($business['login_credentials'] ?? '')); ?></dd></div>
-            <div class="sm:col-span-2"><dt class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Description</dt><dd class="text-sm font-medium text-slate-800 dark:text-slate-200"><?php echo render_clickable_text((string)$business['description']); ?></dd></div>
+        <dl class="grid gap-3 px-5 pb-5 sm:grid-cols-2">
+            <div class="sm:col-span-2">
+                <dt class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Google Business Tracking</dt>
+                <dd class="mt-2">
+                    <?php
+                        $gbpLinkValue = trim((string)($business['gbp_link'] ?? ''));
+                        $googleCustomerId = extract_google_customer_id($gbpLinkValue);
+                    ?>
+                    <div class="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/60 sm:flex-row sm:items-start sm:gap-4">
+                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#4285F4]">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="h-5 w-5" aria-hidden="true">
+                                <path d="M3 9.5 4.5 4h15L21 9.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M4 9.5v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-10" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M9 20.5v-6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v6" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M3 9.5a2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-sm font-bold text-slate-900 dark:text-white">Google Business Profile</p>
+                            <?php if ($googleCustomerId !== ''): ?>
+                                <p class="mt-0.5 break-all text-xs text-slate-500 dark:text-slate-400">Google Customer ID: <?php echo e($googleCustomerId); ?></p>
+                            <?php endif; ?>
+                            <?php if ($gbpLinkValue !== ''): ?>
+                                <a href="<?php echo e($gbpLinkValue); ?>" target="_blank" rel="noopener noreferrer" class="mt-1.5 inline-flex items-center gap-1 break-all text-sm font-semibold text-sky-600 hover:underline dark:text-sky-400">
+                                    View Google Business Profile
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"/><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"/></svg>
+                                </a>
+                            <?php endif; ?>
+                            <div class="mt-2 flex items-center gap-1.5">
+                                <?php if ($gbpLinkValue !== ''): ?>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-emerald-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/></svg>
+                                    <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Linked</span>
+                                <?php else: ?>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-slate-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.5 2.5a1 1 0 001.414-1.414L11 9.586V6z" clip-rule="evenodd"/></svg>
+                                    <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Not linked yet</span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </dd>
+            </div>
+            <?php
+                $infoFieldIcons = [
+                    'phone' => '<path d="M4 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L14 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 2 6a2 2 0 0 1 2-2Z"/>',
+                    'website' => '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.5 2.5 2.5 15.5 0 18"/><path d="M12 3c-2.5 2.5-2.5 15.5 0 18"/>',
+                    'email' => '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/>',
+                    'contact' => '<circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.6 3.1-6.5 7-6.5s7 2.9 7 6.5"/>',
+                    'calendar' => '<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M8 3v4M16 3v4M3.5 10h17"/>',
+                    'tag' => '<path d="M11.5 3.5H5a1.5 1.5 0 0 0-1.5 1.5v6.5a1.5 1.5 0 0 0 .44 1.06l8 8a1.5 1.5 0 0 0 2.12 0l6.5-6.5a1.5 1.5 0 0 0 0-2.12l-8-8a1.5 1.5 0 0 0-1.06-.44Z"/><circle cx="8.3" cy="8.3" r="1.3"/>',
+                    'pin' => '<path d="M12 21s-7-5.686-7-11a7 7 0 1 1 14 0c0 5.314-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/>',
+                    'clock' => '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',
+                    'wrench' => '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.8 2.8-2-2 2.8-2.8Z"/>',
+                    'card' => '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/>',
+                    'share' => '<circle cx="6" cy="12" r="2.2"/><circle cx="17" cy="6" r="2.2"/><circle cx="17" cy="18" r="2.2"/><path d="M7.9 10.9 15.1 7.1M7.9 13.1l7.2 3.8"/>',
+                    'lock' => '<rect x="5" y="10.5" width="14" height="9" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/>',
+                    'doc' => '<path d="M7 3.5h7l4 4V20a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1Z"/><path d="M14 3.5V8h4"/><path d="M8.5 12h7M8.5 15h7M8.5 9h3"/>',
+                ];
+                $renderInfoField = static function (string $iconKey, string $label, string $valueHtml, bool $wide = false, bool $sensitive = false) use ($infoFieldIcons): void {
+                    $chipClasses = $sensitive
+                        ? 'bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400'
+                        : 'bg-brand-50 text-brand-600 dark:bg-brand-900/20 dark:text-brand-400';
+                    echo '<div class="' . ($wide ? 'sm:col-span-2 ' : '') . 'flex items-start gap-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-3">';
+                    echo '<div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ' . $chipClasses . '">';
+                    echo '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $infoFieldIcons[$iconKey] . '</svg>';
+                    echo '</div>';
+                    echo '<div class="min-w-0 flex-1">';
+                    echo '<dt class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">' . e($label) . '</dt>';
+                    echo '<dd class="mt-0.5 text-sm font-medium text-slate-800 dark:text-slate-200">' . $valueHtml . '</dd>';
+                    echo '</div>';
+                    echo '</div>';
+                };
+
+                $renderInfoField('phone', 'Phone', $business['phone'] ? '<a href="tel:' . e($business['phone']) . '" class="text-sky-600 dark:text-sky-400 hover:underline">' . e($business['phone']) . '</a>' : '—');
+                $renderInfoField('website', 'Website', $business['website'] ? '<a href="' . e($business['website']) . '" target="_blank" rel="noopener noreferrer" class="text-sky-600 dark:text-sky-400 hover:underline break-all">' . e($business['website']) . '</a>' : '—');
+                $renderInfoField('email', 'Email', $business['email'] ? '<a href="mailto:' . e($business['email']) . '" class="text-sky-600 dark:text-sky-400 hover:underline">' . e($business['email']) . '</a>' : '—');
+                $renderInfoField('contact', 'Contact Name', e((string)($business['contact_name'] ?? '')));
+                $renderInfoField('calendar', 'In Business Since', e((string)($business['in_business_since'] ?? '')));
+                $renderInfoField('tag', 'Categories', render_clickable_text((string)(($business['categories'] ?? '') !== '' ? $business['categories'] : $business['category'])), true);
+                $renderInfoField('pin', 'Address', render_clickable_text($business['address_line1'] . ', ' . $business['city'] . ', ' . $business['state'] . ' ' . $business['postal_code'] . ', ' . $business['country']), true);
+                $renderInfoField('clock', 'Business Hours', '<span class="whitespace-pre-wrap">' . e((string)$business['hours_json']) . '</span>', true);
+                $renderInfoField('wrench', 'Services', '<span class="whitespace-pre-wrap">' . e((string)($business['services'] ?? '')) . '</span>', true);
+                $renderInfoField('card', 'Payment Methods', render_clickable_text((string)($business['payment_methods'] ?? '')), true);
+                $renderInfoField('share', 'Social Media', render_clickable_text((string)($business['social_media'] ?? '')), true);
+                $renderInfoField('lock', 'Login Credentials', render_clickable_text((string)($business['login_credentials'] ?? '')), true, true);
+                $renderInfoField('doc', 'Description', render_clickable_text((string)$business['description']), true);
+            ?>
         </dl>
     </article>
 
@@ -918,7 +1048,7 @@ render_header('Location Manager');
             <?php endif; ?>
         </div>
 
-        <button id="open_citations_modal" type="button" class="mb-3 inline-flex w-full items-center justify-center rounded-lg border border-brand-600 bg-brand-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700">View Associated Citations</button>
+        <button id="open_citations_modal" type="button" class="mb-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-brand-600 bg-brand-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>View Associated Citations</button>
         <h2 class="text-lg font-bold text-slate-900 dark:text-white">Add Citation (Initial Selection)</h2>
         <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Search and select one or multiple directories to create initial citations. Final completion is done later in View Associated Citations.</p>
 
@@ -926,31 +1056,55 @@ render_header('Location Manager');
             <input type="hidden" name="action" value="add_citations_bulk">
             <div>
                 <label class="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">Directories</label>
-                <input id="directory_picker_search" class="w-full rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white px-3 py-2.5 dark:placeholder-slate-400" type="search" placeholder="Search directories by name, type, region, website...">
+                <div class="relative">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+                    <input id="directory_picker_search" class="w-full rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white pl-9 pr-3 py-2.5 dark:placeholder-slate-400" type="search" placeholder="Search directories by name, type, region, website...">
+                </div>
                 <?php if (!$directories): ?>
                     <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">All active directories already have citations for this business.</p>
                 <?php else: ?>
                     <div class="mt-2 flex flex-wrap items-center gap-2">
-                        <button id="select_visible_directories" type="button" class="rounded-lg border border-slate-300 dark:border-slate-600 px-2.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Select Visible</button>
-                        <button id="clear_directory_selection" type="button" class="rounded-lg border border-slate-300 dark:border-slate-600 px-2.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Clear Selection</button>
-                        <span id="selected_directories_count" class="text-xs font-semibold text-slate-500 dark:text-slate-400">0 selected</span>
+                        <button id="select_visible_directories" type="button" class="inline-flex items-center gap-1 rounded-lg border border-slate-300 dark:border-slate-600 px-2.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
+                            Select Visible
+                        </button>
+                        <button id="clear_directory_selection" type="button" class="inline-flex items-center gap-1 rounded-lg border border-slate-300 dark:border-slate-600 px-2.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M6.225 4.811a.75.75 0 011.06 0L10 7.525l2.715-2.714a.75.75 0 111.06 1.06L11.06 8.586l2.715 2.715a.75.75 0 11-1.06 1.06L10 9.647l-2.715 2.714a.75.75 0 01-1.06-1.06l2.714-2.715-2.714-2.715a.75.75 0 010-1.06z" clip-rule="evenodd"/></svg>
+                            Clear Selection
+                        </button>
+                        <span id="selected_directories_count" class="ml-auto inline-flex items-center rounded-full bg-brand-100 dark:bg-brand-900/30 px-2.5 py-1 text-xs font-bold text-brand-700 dark:text-brand-300">0 selected</span>
                     </div>
-                    <div id="directory_picker_list" class="mt-2 max-h-56 space-y-1 overflow-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2">
+                    <div id="directory_picker_list" class="mt-2 max-h-72 space-y-1.5 overflow-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2">
+                        <?php
+                            $directoryPriorityBadge = [
+                                'high' => 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
+                                'medium' => 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+                                'low' => 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300',
+                            ];
+                        ?>
                         <?php foreach ($directories as $d): ?>
                             <?php
                                 $directoryType = trim((string)($d['directory_type'] ?? 'General'));
                                 $directoryRegion = trim((string)($d['country'] ?? 'Global'));
                                 $directoryWebsite = trim((string)($d['website'] ?? ''));
+                                $directoryLogoPath = trim((string)($d['logo_path'] ?? ''));
+                                $directoryPriority = strtolower(trim((string)($d['priority_level'] ?? 'medium')));
+                                $directoryInitial = strtoupper(substr(trim((string)$d['name']), 0, 1)) ?: '?';
                                 $searchText = strtolower(trim($d['name'] . ' ' . $directoryType . ' ' . $directoryRegion . ' ' . $directoryWebsite));
                             ?>
-                            <label class="directory-picker-item flex cursor-pointer items-start gap-2 rounded-lg border border-transparent bg-white dark:bg-slate-700 px-2.5 py-2 hover:border-slate-300 dark:hover:border-slate-600" data-search="<?php echo e($searchText); ?>">
-                                <input class="directory-picker-checkbox mt-0.5 h-4 w-4 rounded border-slate-300 dark:border-slate-600 dark:bg-slate-600 text-brand-600" type="checkbox" name="directory_ids[]" value="<?php echo e((string)$d['id']); ?>">
-                                <span class="min-w-0">
+                            <label class="directory-picker-item flex cursor-pointer items-center gap-2.5 rounded-xl border-2 border-transparent bg-white dark:bg-slate-700 px-2.5 py-2 transition hover:border-slate-300 dark:hover:border-slate-500" data-search="<?php echo e($searchText); ?>">
+                                <input class="directory-picker-checkbox h-[18px] w-[18px] shrink-0 rounded border-slate-300 dark:border-slate-600 dark:bg-slate-600 text-brand-600 focus:ring-brand-400" type="checkbox" name="directory_ids[]" value="<?php echo e((string)$d['id']); ?>">
+                                <?php if ($directoryLogoPath !== ''): ?>
+                                    <img class="h-8 w-8 shrink-0 rounded-lg border border-slate-200 dark:border-slate-600 bg-white object-contain" src="<?php echo e(public_asset_url($directoryLogoPath)); ?>" alt="">
+                                <?php else: ?>
+                                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-600 text-xs font-bold text-slate-500 dark:text-slate-300"><?php echo e($directoryInitial); ?></span>
+                                <?php endif; ?>
+                                <span class="min-w-0 flex-1">
                                     <span class="block truncate text-sm font-semibold text-slate-800 dark:text-white"><?php echo e((string)$d['name']); ?></span>
-                                    <span class="block truncate text-[11px] text-slate-500 dark:text-slate-400"><?php echo e($directoryType); ?> · <?php echo e($directoryRegion); ?></span>
-                                    <?php if ($directoryWebsite !== ''): ?>
-                                        <span class="block truncate text-[11px] text-slate-400 dark:text-slate-500"><?php echo e($directoryWebsite); ?></span>
-                                    <?php endif; ?>
+                                    <span class="mt-0.5 flex flex-wrap items-center gap-1">
+                                        <span class="truncate text-[11px] text-slate-500 dark:text-slate-400"><?php echo e($directoryType); ?> · <?php echo e($directoryRegion); ?></span>
+                                        <span class="inline-flex shrink-0 items-center rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide <?php echo e($directoryPriorityBadge[$directoryPriority] ?? $directoryPriorityBadge['medium']); ?>"><?php echo e($directoryPriority); ?></span>
+                                    </span>
                                 </span>
                             </label>
                         <?php endforeach; ?>
@@ -998,7 +1152,7 @@ render_header('Location Manager');
                 <label class="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">Notes</label>
                 <textarea class="w-full rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white px-3 py-2.5" name="notes" rows="3"></textarea>
             </div>
-            <button class="w-full rounded-lg bg-brand-600 dark:bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 dark:hover:bg-brand-600 disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700" type="submit" <?php echo !$directories ? 'disabled' : ''; ?>>Add Selected Citations</button>
+            <button class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand-600 dark:bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 dark:hover:bg-brand-600 disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700" type="submit" <?php echo !$directories ? 'disabled' : ''; ?>><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add Selected Citations</button>
         </form>
     </article>
 </section>
@@ -1007,16 +1161,16 @@ render_header('Location Manager');
     <div id="citations_modal_backdrop" class="absolute inset-0 bg-slate-900/55 dark:bg-slate-950/75"></div>
     <div class="relative mx-auto mt-4 w-[96vw] max-w-7xl px-2 pb-4 sm:px-4">
         <section class="flex max-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl">
-            <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 px-5 py-4">
-                <div>
-                    <h2 class="text-lg font-bold text-slate-900 dark:text-white">Associated Citations</h2>
-                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Review initial citations here, then complete and finalize submissions by updating statuses.</p>
+            <div class="flex items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-700 px-5 py-2.5">
+                <div class="flex min-w-0 items-baseline gap-2">
+                    <h2 class="text-base font-bold text-slate-900 dark:text-white">Associated Citations</h2>
+                    <p class="hidden truncate text-[11px] text-slate-500 dark:text-slate-400 sm:block">Review initial citations here, then complete and finalize submissions by updating statuses.</p>
                 </div>
-                <button id="close_citations_modal" type="button" class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Close</button>
+                <button id="close_citations_modal" type="button" class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>Close</button>
             </div>
             <?php if ($citationsModalNotice !== ''): ?>
                 <?php
-                    $noticeClasses = 'rounded-lg border px-3 py-2 text-sm font-semibold ';
+                    $noticeClasses = 'flex items-start justify-between gap-3 rounded-lg border px-3 py-2 text-sm font-semibold ';
                     if ($citationsModalNoticeType === 'err') {
                         $noticeClasses .= 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-800 dark:bg-rose-900/30 dark:text-rose-200';
                     } elseif ($citationsModalNoticeType === 'warning') {
@@ -1027,11 +1181,14 @@ render_header('Location Manager');
                 ?>
                 <div class="border-b border-slate-200 dark:border-slate-700 px-5 py-3">
                     <div class="<?php echo e($noticeClasses); ?>">
-                        <?php echo e($citationsModalNotice); ?>
+                        <span class="flex-1"><?php echo e($citationsModalNotice); ?></span>
+                        <button type="button" onclick="this.parentElement.remove()" aria-label="Dismiss message" class="-m-1 shrink-0 rounded-md p-1 text-current opacity-60 transition hover:bg-black/5 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-current/40 dark:hover:bg-white/10">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
+                        </button>
                     </div>
                 </div>
             <?php endif; ?>
-            <div class="border-b border-slate-200 dark:border-slate-700 px-5 py-3">
+            <div class="border-b border-slate-200 dark:border-slate-700 px-5 py-2">
                 <div class="flex w-full flex-col gap-2">
                     <div class="flex w-full flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                         <div class="flex w-full sm:flex-1 flex-wrap items-center gap-2">
@@ -1045,35 +1202,36 @@ render_header('Location Manager');
                             <option value="Competitor Citation">Competitor Citation</option>
                             <option value="Lead Aggregators">Lead Aggregators</option>
                         </select>
-                        <button id="citations_sort_btn" type="button" class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Sort: Newest</button>
+                        <button id="citations_sort_btn" type="button" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v16M7 4 4 7M7 4l3 3"/><path d="M17 20V4M17 20l-3-3M17 20l3-3"/></svg><span id="citations_sort_btn_label">Sort: Newest</span></button>
                         <button id="citations_export" type="button" class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-600 bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:border-emerald-700 hover:bg-emerald-700 dark:border-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 disabled:cursor-wait disabled:opacity-60">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
                             <span id="citations_export_label">Export Excel</span>
                         </button>
                         </div>
-                        <div class="flex w-full sm:w-auto flex-wrap items-center justify-between sm:justify-end gap-2">
+                        <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
                             <input type="hidden" form="bulk_assign_form" name="action" value="bulk_assign_citations">
-                            <select form="bulk_assign_form" name="bulk_assigned_to" class="rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white px-3 py-2 text-sm text-xs">
+                            <select form="bulk_assign_form" name="bulk_assigned_to" class="w-full rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white px-3 py-2 text-sm sm:w-auto sm:text-xs">
                                 <option value="">Assignee</option>
                                 <?php foreach ($assignableUsers as $assignableUser): ?>
                                     <option value="<?php echo e((string)$assignableUser['id']); ?>"><?php echo e((string)$assignableUser['full_name']); ?></option>
                                 <?php endforeach; ?>
                             </select>
-                            <button form="bulk_assign_form" type="submit" class="rounded-lg bg-brand-600 dark:bg-brand-700 px-2 sm:px-3 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-brand-700 dark:hover:bg-brand-600 whitespace-nowrap">Assign</button>
-                            <input type="hidden" form="bulk_delete_form" name="action" value="request_bulk_delete_citations">
-                            <button id="bulk_delete_submit" form="bulk_delete_form" type="submit" class="rounded-lg bg-rose-600 dark:bg-rose-700 px-2 sm:px-3 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-rose-700 dark:hover:bg-rose-600 whitespace-nowrap">Delete</button>
+                            <div class="flex w-full items-center gap-2 sm:w-auto">
+                                <button form="bulk_assign_form" type="submit" class="inline-flex flex-1 items-center justify-center gap-1 rounded-lg bg-brand-600 dark:bg-brand-700 px-2 sm:px-3 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-brand-700 dark:hover:bg-brand-600 whitespace-nowrap sm:flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="m16 11 2 2 4-4"/></svg>Assign</button>
+                                <input type="hidden" form="bulk_delete_form" name="action" value="request_bulk_delete_citations">
+                                <button id="bulk_delete_submit" form="bulk_delete_form" type="submit" class="inline-flex flex-1 items-center justify-center gap-1 rounded-lg bg-rose-600 dark:bg-rose-700 px-2 sm:px-3 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-rose-700 dark:hover:bg-rose-600 whitespace-nowrap sm:flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>Delete</button>
+                            </div>
                         </div>
                     </div>
-                    <button id="toggle_metrics_btn" type="button" aria-expanded="true" aria-controls="citations_metrics_content" class="w-full sm:hidden rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-between">
-                        <span>Metrics</span>
-                        <span id="toggle_metrics_icon" class="text-sm">▲</span>
+                    <button id="toggle_metrics_btn" type="button" aria-expanded="false" aria-controls="citations_metrics_panel" class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-between">
+                        <span>Quick Metrics</span>
+                        <span id="toggle_metrics_icon" class="text-sm">▼</span>
                     </button>
-                    <div id="citations_metrics_panel" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5">
-                        <p class="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Quick Metrics</p>
-                        <div id="citations_metrics_content" class="mt-2 grid gap-2 sm:grid-cols-2 auto-rows-max">
+                    <div id="citations_metrics_panel" class="hidden w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5">
+                        <div id="citations_metrics_content" class="grid gap-2 sm:grid-cols-2 auto-rows-max">
                             <section class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/40 px-2.5 py-2 min-w-0">
                                 <p class="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Citation Status</p>
-                                <div class="mt-1.5 flex items-center gap-1.5 overflow-x-auto whitespace-nowrap pb-1 [scrollbar-width:thin]">
+                                <div class="mt-1.5 flex items-center gap-1.5 overflow-x-auto whitespace-nowrap py-1 [scrollbar-width:thin]">
                                     <button type="button" class="citation-metric-btn inline-flex items-center gap-1 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700" data-metric-kind="status" data-metric-value="not_started" aria-pressed="false">Not Started <span class="citation-metric-count min-w-[20px] rounded-full bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 text-center" data-metric-count>0</span></button>
                                     <button type="button" class="citation-metric-btn inline-flex items-center gap-1 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700" data-metric-kind="status" data-metric-value="in_progress" aria-pressed="false">In Progress <span class="citation-metric-count min-w-[20px] rounded-full bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 text-center" data-metric-count>0</span></button>
                                     <button type="button" class="citation-metric-btn inline-flex items-center gap-1 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700" data-metric-kind="status" data-metric-value="pending_submission" aria-pressed="false">Pending <span class="citation-metric-count min-w-[20px] rounded-full bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 text-center" data-metric-count>0</span></button>
@@ -1083,7 +1241,7 @@ render_header('Location Manager');
                             </section>
                             <section class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/40 px-2.5 py-2 min-w-0">
                                 <p class="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Live URL Status</p>
-                                <div class="mt-1.5 flex items-center gap-1.5 overflow-x-auto whitespace-nowrap pb-1 [scrollbar-width:thin]">
+                                <div class="mt-1.5 flex items-center gap-1.5 overflow-x-auto whitespace-nowrap py-1 [scrollbar-width:thin]">
                                     <button type="button" class="citation-metric-btn inline-flex items-center gap-1 rounded-full border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-1 text-[11px] font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/30" data-metric-kind="nap" data-metric-value="correct" aria-pressed="false">Correct NAP <span class="citation-metric-count min-w-[20px] rounded-full bg-emerald-100 dark:bg-emerald-900/40 px-1.5 py-0.5 text-center" data-metric-count>0</span></button>
                                     <button type="button" class="citation-metric-btn inline-flex items-center gap-1 rounded-full border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-900/20 px-2.5 py-1 text-[11px] font-semibold text-rose-800 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/30" data-metric-kind="nap" data-metric-value="nap_error" aria-pressed="false">NAP Error <span class="citation-metric-count min-w-[20px] rounded-full bg-rose-100 dark:bg-rose-900/40 px-1.5 py-0.5 text-center" data-metric-count>0</span></button>
                                     <button type="button" class="citation-metric-btn inline-flex items-center gap-1 rounded-full border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/40 px-2.5 py-1 text-[11px] font-semibold text-amber-800 dark:text-amber-100 hover:bg-amber-100 dark:hover:bg-amber-900/60" data-metric-kind="nap" data-metric-value="pending_update_edit_request" aria-pressed="false">Pending Update/Edit Request <span class="citation-metric-count min-w-[20px] rounded-full bg-amber-100 dark:bg-amber-800/70 px-1.5 py-0.5 text-center" data-metric-count>0</span></button>
@@ -1298,7 +1456,7 @@ render_header('Location Manager');
         <section class="rounded-2xl border border-slate-200 bg-white shadow-2xl">
             <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
                 <h3 id="proof_preview_title" class="text-lg font-bold text-slate-900">Proof Preview</h3>
-                <button id="close_proof_preview_modal" type="button" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">Close</button>
+                <button id="close_proof_preview_modal" type="button" class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>Close</button>
             </div>
             <div class="max-h-[78vh] overflow-auto bg-slate-50 p-4">
                 <img id="proof_preview_image" class="mx-auto max-h-[70vh] w-auto max-w-full rounded-lg border border-slate-200 bg-white object-contain p-1" src="" alt="Proof screenshot preview">
@@ -1313,7 +1471,7 @@ render_header('Location Manager');
         <section class="rounded-2xl border border-slate-200 bg-white shadow-2xl">
             <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
                 <h3 class="text-lg font-bold text-slate-900">Edit Business Information</h3>
-                <button id="close_business_edit_modal" type="button" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">Close</button>
+                <button id="close_business_edit_modal" type="button" class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>Close</button>
             </div>
             <form method="post" class="max-h-[78vh] space-y-3 overflow-y-auto px-5 py-4">
                 <input type="hidden" name="action" value="update_business_info">
@@ -1419,7 +1577,7 @@ render_header('Location Manager');
                     <textarea class="w-full rounded-lg border border-slate-300 px-2 py-2 text-sm" name="description" rows="3"><?php echo e((string)($business['description'] ?? '')); ?></textarea>
                 </div>
 
-                <button class="w-full rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-950" type="submit">Save Business Information</button>
+                <button class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-3 py-2 text-xs font-semibold text-white hover:bg-brand-700" type="submit"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>Save Business Information</button>
             </form>
         </section>
     </div>
@@ -1431,7 +1589,7 @@ render_header('Location Manager');
         <section class="rounded-2xl border border-slate-200 bg-white shadow-2xl">
             <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
                 <h3 class="text-lg font-bold text-slate-900">Edit Citation</h3>
-                <button id="close_citation_edit_modal" type="button" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">Close</button>
+                <button id="close_citation_edit_modal" type="button" class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>Close</button>
             </div>
             <form method="post" enctype="multipart/form-data" class="max-h-[72vh] space-y-3 overflow-y-auto px-5 py-4">
                 <input type="hidden" name="action" value="update_citation">
@@ -1513,12 +1671,12 @@ render_header('Location Manager');
                             <option value="Pending submission, awaiting review.">Pending submission, awaiting review.</option>
                             <option value="Live listing confirmed.">Live listing confirmed.</option>
                         </select>
-                        <button type="button" class="note-snippet-apply rounded-lg border border-slate-300 px-2 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100">Add</button>
+                        <button type="button" class="note-snippet-apply inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add</button>
                     </div>
                     <textarea id="edit_citation_notes" class="w-full rounded-lg border border-slate-300 px-2 py-2 text-sm" name="notes" rows="4"></textarea>
                 </div>
 
-                <button class="w-full rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-950" type="submit">Update Citation</button>
+                <button class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-3 py-2 text-xs font-semibold text-white hover:bg-brand-700" type="submit"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>Update Citation</button>
             </form>
         </section>
     </div>
@@ -1544,7 +1702,7 @@ render_header('Location Manager');
     const closeCitationsModalBtn = document.getElementById('close_citations_modal');
     const citationsModalBackdrop = document.getElementById('citations_modal_backdrop');
     const toggleMetricsBtn = document.getElementById('toggle_metrics_btn');
-    const citationsMetricsContent = document.getElementById('citations_metrics_content');
+    const citationsMetricsContent = document.getElementById('citations_metrics_panel');
     const toggleMetricsIcon = document.getElementById('toggle_metrics_icon');
     const citationEditModal = document.getElementById('citation_edit_modal');
     const closeCitationEditModalBtn = document.getElementById('close_citation_edit_modal');
@@ -1597,19 +1755,53 @@ render_header('Location Manager');
         return selectedOption ? (selectedOption.getAttribute('data-directory-website') || '').trim() : '';
     };
 
+    // window.open(url, 'cfStickyNotes') only reuses an existing popup when the
+    // calling tab shares an opener chain with whichever tab originally opened
+    // it - a fresh tab/reload has no such reference, so it silently opens a
+    // second copy. BroadcastChannel works across *any* same-origin tab
+    // regardless of opener chain, so it's used here to ask "is one already
+    // open?" before ever calling window.open.
+    const stickyChannel = ('BroadcastChannel' in window) ? new BroadcastChannel('cf-sticky-notes') : null;
+    const stickyBusinessId = '<?php echo e((string)$businessId); ?>';
+
     const openStickyNotesWindow = () => {
-        const stickyUrl = '<?php echo e(app_config()['base_url']); ?>/sticky_notes.php?business_id=<?php echo e((string)$businessId); ?>';
+        const stickyUrl = '<?php echo e(app_config()['base_url']); ?>/sticky_notes.php?business_id=' + stickyBusinessId;
         const features = 'popup=yes,width=430,height=760,resizable=yes,scrollbars=yes';
+
+        const openFresh = () => {
+            stickyNotesWindow = window.open(stickyUrl, 'cfStickyNotes', features);
+            if (stickyNotesWindow) {
+                stickyNotesWindow.focus();
+            }
+        };
+
         if (stickyNotesWindow && !stickyNotesWindow.closed) {
             stickyNotesWindow.location.href = stickyUrl;
             stickyNotesWindow.focus();
             return;
         }
 
-        stickyNotesWindow = window.open(stickyUrl, 'cfStickyNotes', features);
-        if (stickyNotesWindow) {
-            stickyNotesWindow.focus();
+        if (!stickyChannel) {
+            openFresh();
+            return;
         }
+
+        let alreadyOpenElsewhere = false;
+        const onReply = (event) => {
+            if (event.data && event.data.type === 'cf-sticky-notes-here') {
+                alreadyOpenElsewhere = true;
+                stickyChannel.postMessage({ type: 'cf-sticky-notes-focus', businessId: stickyBusinessId });
+            }
+        };
+        stickyChannel.addEventListener('message', onReply);
+        stickyChannel.postMessage({ type: 'cf-sticky-notes-ping' });
+
+        setTimeout(() => {
+            stickyChannel.removeEventListener('message', onReply);
+            if (!alreadyOpenElsewhere) {
+                openFresh();
+            }
+        }, 200);
     };
 
     if (stickyNotesButton) {
@@ -1736,22 +1928,10 @@ render_header('Location Manager');
         citationsModalBackdrop.addEventListener('click', closeCitationsModal);
     }
 
-    // Toggle metrics panel on mobile
+    // Toggle metrics panel (collapsed by default so the table gets more room)
     if (toggleMetricsBtn && citationsMetricsContent) {
-        const mobileViewport = window.matchMedia('(max-width: 639px)');
-        let metricsVisible = true;
+        let metricsVisible = false;
         const updateMetricsToggle = () => {
-            const isMobile = mobileViewport.matches;
-
-            if (!isMobile) {
-                citationsMetricsContent.classList.remove('hidden');
-                toggleMetricsBtn.setAttribute('aria-expanded', 'true');
-                if (toggleMetricsIcon) {
-                    toggleMetricsIcon.textContent = '▲';
-                }
-                return;
-            }
-
             if (metricsVisible) {
                 citationsMetricsContent.classList.remove('hidden');
                 toggleMetricsBtn.setAttribute('aria-expanded', 'true');
@@ -1770,12 +1950,6 @@ render_header('Location Manager');
             metricsVisible = !metricsVisible;
             updateMetricsToggle();
         });
-
-        if (typeof mobileViewport.addEventListener === 'function') {
-            mobileViewport.addEventListener('change', updateMetricsToggle);
-        } else if (typeof mobileViewport.addListener === 'function') {
-            mobileViewport.addListener(updateMetricsToggle);
-        }
 
         updateMetricsToggle();
     }
@@ -1822,7 +1996,23 @@ render_header('Location Manager');
         });
     });
 
+    const directoryPickerSelectedClasses = ['border-brand-500', 'bg-brand-50', 'dark:bg-brand-900/20', 'dark:border-brand-500'];
+
+    const syncDirectoryPickerItemState = (checkbox) => {
+        const item = checkbox.closest('.directory-picker-item');
+        if (!item) {
+            return;
+        }
+        if (checkbox.checked) {
+            item.classList.add(...directoryPickerSelectedClasses);
+        } else {
+            item.classList.remove(...directoryPickerSelectedClasses);
+        }
+    };
+
     const updateSelectedDirectoriesCount = () => {
+        directoryPickerCheckboxes.forEach(syncDirectoryPickerItemState);
+
         if (!selectedDirectoriesCount) {
             return;
         }
@@ -2237,6 +2427,7 @@ render_header('Location Manager');
     const citationsTypeFilter = document.getElementById('citations_type_filter');
     const citationsSearch = document.getElementById('citations_search');
     const citationsSortBtn = document.getElementById('citations_sort_btn');
+    const citationsSortBtnLabel = document.getElementById('citations_sort_btn_label');
     const citationsExport = document.getElementById('citations_export');
     const citationsExportLabel = document.getElementById('citations_export_label');
     const citationMetricButtons = Array.from(document.querySelectorAll('.citation-metric-btn'));
@@ -2613,7 +2804,9 @@ render_header('Location Manager');
         citationsSortBtn.addEventListener('click', () => {
             activeSortModeIndex = (activeSortModeIndex + 1) % sortModes.length;
             const activeSortMode = sortModes[activeSortModeIndex] || sortModes[0];
-            citationsSortBtn.textContent = activeSortMode.label;
+            if (citationsSortBtnLabel) {
+                citationsSortBtnLabel.textContent = activeSortMode.label;
+            }
             applyCitationSort();
             applyCitationFilters();
         });
