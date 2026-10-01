@@ -344,6 +344,20 @@ function ensure_runtime_schema(): void
         }
     }
 
+    if (table_has_column('businesses', 'gbp_link')) {
+        $gbpLinkLength = table_column_varchar_length('businesses', 'gbp_link');
+        if ($gbpLinkLength !== null && $gbpLinkLength < 2048) {
+            db()->exec('ALTER TABLE businesses MODIFY COLUMN gbp_link VARCHAR(2048) DEFAULT ""');
+        }
+    }
+
+    if (table_has_column('businesses', 'website')) {
+        $businessWebsiteLength = table_column_varchar_length('businesses', 'website');
+        if ($businessWebsiteLength !== null && $businessWebsiteLength < 2048) {
+            db()->exec('ALTER TABLE businesses MODIFY COLUMN website VARCHAR(2048) DEFAULT ""');
+        }
+    }
+
     try {
         db()->exec('ALTER TABLE businesses ADD INDEX idx_business_client (client_id)');
     } catch (Throwable $e) {
@@ -513,6 +527,13 @@ function ensure_runtime_schema(): void
             }
         }
 
+        if (table_has_column('directories', 'website')) {
+            $directoryWebsiteLength = table_column_varchar_length('directories', 'website');
+            if ($directoryWebsiteLength !== null && $directoryWebsiteLength < 2048) {
+                db()->exec('ALTER TABLE directories MODIFY COLUMN website VARCHAR(2048) NOT NULL');
+            }
+        }
+
         if (table_has_column('directories', 'submission_url')) {
             $submissionUrlLength = table_column_varchar_length('directories', 'submission_url');
             if ($submissionUrlLength !== null && $submissionUrlLength < 2048) {
@@ -553,6 +574,13 @@ function ensure_runtime_schema(): void
         foreach ($clientColumns as $column => $sql) {
             if (!table_has_column('clients', $column)) {
                 db()->exec($sql);
+            }
+        }
+
+        if (table_has_column('clients', 'website')) {
+            $clientWebsiteLength = table_column_varchar_length('clients', 'website');
+            if ($clientWebsiteLength !== null && $clientWebsiteLength < 2048) {
+                db()->exec('ALTER TABLE clients MODIFY COLUMN website VARCHAR(2048) DEFAULT ""');
             }
         }
     }

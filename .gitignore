@@ -1,0 +1,13 @@
+# Environment-specific config override (see app/helpers.php: app_config()).
+# Put real per-server DB credentials / base_url here instead of editing
+# the committed app/config.php, so a `git pull` on a server never
+# overwrites its live settings.
+app/config.local.php
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.idea/
+
+# Local scratch/log output
+*.log

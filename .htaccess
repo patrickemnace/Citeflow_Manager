@@ -1,0 +1,26 @@
+Options -Indexes
+
+RewriteEngine On
+
+# Block direct access to internal/private project folders.
+RewriteRule ^(app|database|memories|\.git|\.github|\.vscode)(/|$) - [F,L,NC]
+
+# Block access to sensitive project files.
+RewriteRule ^(README\.md|update_users\.py|composer\.(json|lock)|package(-lock)?\.json|phpunit\.xml)(/|$) - [F,L,NC]
+
+# Never execute uploaded files as PHP (mirrors deploy/nginx.conf.example).
+RewriteRule ^public/uploads/.*\.ph(p[0-9]*|tml|ar)$ - [F,L,NC]
+
+# Keep root index outside public and hide /public URLs.
+# Use relative targets so this works in both subfolder and domain-root deployments.
+RewriteRule ^index\.php$ ./ [R=301,L,NC]
+RewriteRule ^public/index\.php$ ./ [R=301,L,NC]
+RewriteRule ^public/client_login\.php$ client_portal.php [R=301,L,NC]
+
+# Serve existing files/folders as-is.
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Route all other requests to /public without exposing it in URL.
+RewriteRule ^(.*)$ public/$1 [L,QSA]
