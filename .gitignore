@@ -1,7 +1,9 @@
-# Environment-specific config override (see app/helpers.php: app_config()).
-# Put real per-server DB credentials / base_url here instead of editing
-# the committed app/config.php, so a `git pull` on a server never
-# overwrites its live settings.
+# Real per-server DB credentials / base_url live only on each server now,
+# never in git, so a pull can never overwrite live settings. Copy
+# app/config.example.php to app/config.php on each environment and fill
+# it in once. app/config.local.php (see app_config() in app/helpers.php)
+# is still supported as an optional override on top of config.php.
+app/config.php
 app/config.local.php
 
 # OS / editor cruft
