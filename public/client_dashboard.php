@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['action'] ?? '') ==
         }
     }
 
-    $redirectUrl = app_config()['base_url'] . '/client_dashboard.php';
+    $redirectUrl = '/client_dashboard.php';
     if ($selectedBusinessIdFromPost > 0) {
         $redirectUrl .= '?business_id=' . $selectedBusinessIdFromPost;
     }

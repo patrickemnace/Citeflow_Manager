@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['action'] ?? '') ==
 
     set_flash('ok', 'Comment marked as updated.');
 
-    $redirectUrl = app_config()['base_url'] . '/client_citation_comments.php';
+    $redirectUrl = '/client_citation_comments.php';
     $redirectQuery = trim((string)($_POST['return_query'] ?? ''));
     if ($redirectQuery !== '') {
         $redirectUrl .= '?' . ltrim($redirectQuery, '?');
