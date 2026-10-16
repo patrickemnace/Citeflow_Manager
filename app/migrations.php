@@ -347,14 +347,22 @@ function ensure_runtime_schema(): void
     if (table_has_column('businesses', 'gbp_link')) {
         $gbpLinkLength = table_column_varchar_length('businesses', 'gbp_link');
         if ($gbpLinkLength !== null && $gbpLinkLength < 2048) {
-            db()->exec('ALTER TABLE businesses MODIFY COLUMN gbp_link VARCHAR(2048) DEFAULT ""');
+            try {
+                db()->exec('ALTER TABLE businesses MODIFY COLUMN gbp_link VARCHAR(2048) DEFAULT ""');
+            } catch (Throwable $e) {
+                // Leave the column at its current length if the widen fails for any reason.
+            }
         }
     }
 
     if (table_has_column('businesses', 'website')) {
         $businessWebsiteLength = table_column_varchar_length('businesses', 'website');
         if ($businessWebsiteLength !== null && $businessWebsiteLength < 2048) {
-            db()->exec('ALTER TABLE businesses MODIFY COLUMN website VARCHAR(2048) DEFAULT ""');
+            try {
+                db()->exec('ALTER TABLE businesses MODIFY COLUMN website VARCHAR(2048) DEFAULT ""');
+            } catch (Throwable $e) {
+                // Leave the column at its current length if the widen fails for any reason.
+            }
         }
     }
 
@@ -530,7 +538,12 @@ function ensure_runtime_schema(): void
         if (table_has_column('directories', 'website')) {
             $directoryWebsiteLength = table_column_varchar_length('directories', 'website');
             if ($directoryWebsiteLength !== null && $directoryWebsiteLength < 2048) {
-                db()->exec('ALTER TABLE directories MODIFY COLUMN website VARCHAR(2048) NOT NULL');
+                try {
+                    db()->exec('UPDATE directories SET website = "" WHERE website IS NULL');
+                    db()->exec('ALTER TABLE directories MODIFY COLUMN website VARCHAR(2048) NOT NULL');
+                } catch (Throwable $e) {
+                    // Leave the column at its current length if the widen fails for any reason.
+                }
             }
         }
 
@@ -580,7 +593,11 @@ function ensure_runtime_schema(): void
         if (table_has_column('clients', 'website')) {
             $clientWebsiteLength = table_column_varchar_length('clients', 'website');
             if ($clientWebsiteLength !== null && $clientWebsiteLength < 2048) {
-                db()->exec('ALTER TABLE clients MODIFY COLUMN website VARCHAR(2048) DEFAULT ""');
+                try {
+                    db()->exec('ALTER TABLE clients MODIFY COLUMN website VARCHAR(2048) DEFAULT ""');
+                } catch (Throwable $e) {
+                    // Leave the column at its current length if the widen fails for any reason.
+                }
             }
         }
     }
